@@ -6,7 +6,7 @@ RunState connects the numbers from a run with how you felt and the music around 
 
 Choose your energy, watch the countdown assemble into Active Run, bring the music player inside the distance visualizer, pause and finish, then revisit the example in History. Dark is the default run appearance; Light is available from Appearance.
 
-**This is a simulated design preview.** Distances and runs are fictional. Music controls are silent, reflections are scripted examples, and the preview does not connect to GPS, Spotify, ElevenLabs or the app backend. It requests no account or device permissions. Example runs last only for the current page session; the appearance preference stays in this browser.
+**This is a simulated design preview.** This interactive preview uses example run data and sample reflections. Music controls demonstrate the experience without playing audio.
 
 ## Try the flow
 
