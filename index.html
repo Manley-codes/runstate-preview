@@ -1,141 +1,20 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>RunState — design previews</title>
-<meta name="description" content="Interactive design previews for RunState, a running app built around what a run meant rather than what it recorded.">
-<style>
-  :root {
-    --ink: #0A0B0A;
-    --paper: #F1EEDF;
-    --accent: #D2690A;
-    --line: rgba(241,238,223,0.14);
-    --dim: rgba(241,238,223,0.58);
-  }
-  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-  html, body { margin: 0; padding: 0; background: var(--ink); }
-  body {
-    color: var(--paper);
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    line-height: 1.55;
-    -webkit-font-smoothing: antialiased;
-    padding: max(32px, env(safe-area-inset-top)) 22px max(40px, env(safe-area-inset-bottom));
-    display: flex;
-    justify-content: center;
-  }
-  main { width: 100%; max-width: 560px; }
-
-  .mark {
-    font-size: 13px;
-    font-weight: 700;
-    letter-spacing: 0.26em;
-    color: var(--paper);
-  }
-  .mark span { color: var(--dim); font-weight: 600; }
-
-  h1 {
-    margin: 26px 0 0;
-    font-size: clamp(30px, 8vw, 42px);
-    line-height: 1.12;
-    font-weight: 700;
-    letter-spacing: -0.02em;
-  }
-  h1 em { font-style: normal; color: var(--dim); }
-
-  .lede { margin: 18px 0 0; font-size: 17px; color: var(--dim); }
-
-  .rule { height: 1px; background: var(--line); margin: 34px 0; border: 0; }
-
-  a.card {
-    display: block;
-    text-decoration: none;
-    color: inherit;
-    border: 1px solid var(--line);
-    border-radius: 18px;
-    padding: 22px 20px;
-    margin-bottom: 14px;
-    transition: border-color 180ms ease, background 180ms ease;
-  }
-  a.card:hover, a.card:focus-visible {
-    border-color: rgba(241,238,223,0.34);
-    background: rgba(241,238,223,0.035);
-    outline: none;
-  }
-  .card .eyebrow {
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 0.22em;
-    color: var(--accent);
-  }
-  .card .name {
-    margin-top: 9px;
-    font-size: 23px;
-    font-weight: 650;
-    letter-spacing: -0.01em;
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: 14px;
-  }
-  .card .name .go { font-size: 19px; color: var(--dim); font-weight: 400; }
-  .card .try { margin-top: 8px; font-size: 15px; color: var(--dim); }
-
-  .note {
-    margin-top: 30px;
-    padding: 18px 18px;
-    border-radius: 14px;
-    background: rgba(241,238,223,0.045);
-    font-size: 14.5px;
-    color: var(--dim);
-  }
-  .note strong { color: var(--paper); font-weight: 650; }
-
-  footer { margin-top: 34px; font-size: 14px; color: var(--dim); }
-  footer a { color: var(--paper); text-decoration: none; border-bottom: 1px solid var(--line); }
-  footer a:hover { border-bottom-color: var(--accent); }
-</style>
-</head>
-<body>
-<main>
-
-  <div class="mark">RUNSTATE <span>DESIGN PREVIEWS</span></div>
-
-  <h1>What the run meant,<br><em>not just what it recorded.</em></h1>
-
-  <p class="lede">
-    RunState is a running app I'm building. Most running apps tell you what you did — distance,
-    pace, time. This one is about how the run felt going in, what it asked of you, and what you
-    took away. Music is a big part of that.
-  </p>
-
-  <hr class="rule">
-
-  <a class="card" href="start.html">
-    <div class="eyebrow">SCREEN ONE</div>
-    <div class="name">Start a run <span class="go">→</span></div>
-    <div class="try">Choose an energy level, press Start — then tap Pause, and hold Stop to end.</div>
-  </a>
-
-<a class="card" href="complete.html">
-  <div class="eyebrow">SCREEN TWO</div>
-  <div class="name">Finish a run <span class="go">→</span></div>
-  <div class="try">Choose how the run left you, watch RunState build its reflection, then open the saved record in Log History.</div>
-</a>
-
-  <div class="note">
-    <strong>These are interactive design prototypes, not the working app.</strong>
-    Everything shown uses example data, and some elements are visual only. Both screens are
-    early versions and will be replaced as the design continues.
-  </div>
-
-  <footer>
-    Best on a phone. The actual application lives at
-    <a href="https://github.com/Manley-codes/RunState">github.com/Manley-codes/RunState</a>.
-    <br><br>
-    Built by Manley Johnson.
-  </footer>
-
-</main>
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#101113" />
+    <meta name="description" content="Explore RunState's current Android design: set your energy, start a run, reach your music and revisit a reflection. Interactive demo with example data." />
+    <title>RunState — Interactive app preview</title>
+    <link rel="preload" href="./media/fonts/barlow-condensed-regular.ttf" as="font" type="font/ttf" crossorigin />
+    <link rel="preload" href="./media/fonts/barlow-condensed-medium.ttf" as="font" type="font/ttf" crossorigin />
+    <link rel="preload" href="./media/fonts/roboto-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="./media/fonts/roboto-latin-500-normal.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="./media/fonts/roboto-latin-600-normal.woff2" as="font" type="font/woff2" crossorigin />
+    <script type="module" crossorigin src="./assets/index-6IyghfyL.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/index-BNxyu_Ri.css">
+  </head>
+  <body>
+    <div id="root"></div>
+  </body>
 </html>
