@@ -1,9 +1,10 @@
-import { useEffect, useId, useRef, useState } from 'react';
+import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { asset } from './demo';
 import type { Energy } from './demo';
 import './opening-start.css';
 import { NativeAgentRing } from './NativeAgentRing';
+import openingFirstFrame from './opening-first-frame.webp?inline';
 
 type Tile = { id: string; width: number; position?: string };
 const openingRows: Tile[][] = [
@@ -16,11 +17,16 @@ const openingRows: Tile[][] = [
 ];
 const rowPhases = [5,2,2,2,3,3];
 const rowSpeeds = [51.75,56.0625,53.1875,57.5,52.46875,56.0625];
+function openingRowTransform(index:number,seconds:number) {
+  const width=openingRows[index].reduce((sum,tile)=>sum+tile.width+6,0);
+  const travel=(rowSpeeds[index]*(seconds+rowPhases[index]))%width;
+  return `translateX(${index%2?travel-width:-travel}px)`;
+}
 
 function Canvas({children,className}:{children:ReactNode;className:string}) {
   const host = useRef<HTMLDivElement>(null);
   const [scale,setScale] = useState(1);
-  useEffect(() => {
+  useLayoutEffect(() => {
     const element=host.current;
     if(!element) return;
     const measure=()=>setScale(Math.min(element.clientWidth / 393, element.clientHeight / 794));
@@ -35,11 +41,22 @@ function Canvas({children,className}:{children:ReactNode;className:string}) {
 /** The six native opening rows, including their original image order and alternating travel. */
 export function Opening({onContinue}:{onContinue:()=>void}) {
   const rows=useRef<(HTMLDivElement|null)[]>([]);
+  const [photosReady,setPhotosReady]=useState(false);
   const continueRef=useRef(onContinue);
   const finished=useRef(false);
   const [startPhase]=useState(()=>Math.random()*30);
   continueRef.current=onContinue;
   const finish=()=>{if(!finished.current){finished.current=true;continueRef.current();}};
+  useEffect(()=>{
+    let mounted=true;
+    // Loading and decoding are separate: reveal the whole wall only when every
+    // displayed tile can paint. A slow/failed photo keeps the complete native still.
+    const images=rows.current.flatMap(row=>Array.from(row?.querySelectorAll('img')??[]));
+    Promise.all(images.map(image=>image.decode())).then(()=>{
+      if(mounted&&images.length===openingRows.flat().length*2&&images.every(image=>image.naturalWidth>0))setPhotosReady(true);
+    }).catch(()=>{/* Keep the complete wall; Skip and the original 4.8s timer still work. */});
+    return()=>{mounted=false;};
+  },[]);
   useEffect(()=>{
     let frame=0, elapsed=0, last=performance.now();
     const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -48,9 +65,7 @@ export function Opening({onContinue}:{onContinue:()=>void}) {
       if(!document.hidden) elapsed+=delta;
       rows.current.forEach((row,index)=>{
         if(!row)return;
-        const width=openingRows[index].reduce((sum,tile)=>sum+tile.width+6,0);
-        const travel=(rowSpeeds[index]*(startPhase+rowPhases[index]+(reduced?0:elapsed)))%width;
-        row.style.transform=`translateX(${index%2?travel-width:-travel}px)`;
+        row.style.transform=openingRowTransform(index,startPhase+(reduced?0:elapsed));
       });
       if(elapsed>=4.8){if(!finished.current){finished.current=true;continueRef.current();}return;}
       frame=requestAnimationFrame(animate);
@@ -59,8 +74,11 @@ export function Opening({onContinue}:{onContinue:()=>void}) {
     return()=>cancelAnimationFrame(frame);
   },[startPhase]);
   return <Canvas className="rs-opening" ><button className="rs-opening-skip" onClick={finish} aria-label="Enter RunState; skip opening animation">
-    <div className="rs-opening-collage" aria-hidden="true">{openingRows.map((row,index)=><div className="rs-opening-row" key={index}><div className="rs-opening-track" ref={el=>{rows.current[index]=el;}}>{[...row,...row].map((tile,tileIndex)=><img key={`${tile.id}-${tileIndex}`} src={asset(`opening/${tile.id}.webp`)} alt="" draggable={false} style={{width:tile.width,objectPosition:tile.position}}/>)}</div></div>)}</div>
-    <div className="rs-opening-shade" />
+    <img className="rs-opening-first-frame" src={openingFirstFrame} alt="" draggable={false}/>
+    <div className={`rs-opening-live${photosReady?' is-ready':''}`} aria-hidden="true">
+      <div className="rs-opening-collage">{openingRows.map((row,index)=><div className="rs-opening-row" key={index}><div className="rs-opening-track" ref={el=>{rows.current[index]=el;}} style={{transform:openingRowTransform(index,startPhase)}}>{[...row,...row].map((tile,tileIndex)=><img key={`${tile.id}-${tileIndex}`} src={asset(`opening/${tile.id}.webp`)} alt="" draggable={false} style={{width:tile.width,objectPosition:tile.position}}/>)}</div></div>)}</div>
+      <div className="rs-opening-shade" />
+    </div>
     <span className="rs-opening-wordmark" aria-hidden="true"><span>R</span><span>u</span><span>n</span><span>St</span><span>a</span><span>te</span></span>
     <span className="rs-opening-enter">Tap to enter</span>
   </button></Canvas>;
