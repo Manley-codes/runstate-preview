@@ -23,40 +23,68 @@ function initialPage():Page {
   if(location.pathname.endsWith('/start.html'))return 'start';
   return 'opening';
 }
-function initialAppearance():Appearance {
-  try{return localStorage.getItem('runstate-public-appearance')==='day'?'day':'night';}catch{return 'night';}
+type AppearanceChoice = Appearance | 'auto';
+type PlayerLayout = 'headphones' | 'album';
+function initialAppearance():AppearanceChoice {
+  try {
+    const saved = localStorage.getItem('runstate-public-appearance');
+    return saved === 'day' || saved === 'auto' ? saved : 'night';
+  } catch { return 'night'; }
+}
+function runAppearance(choice:AppearanceChoice):Appearance {
+  if (choice !== 'auto') return choice;
+  const hour = new Date().getHours();
+  return hour >= 7 && hour < 19 ? 'day' : 'night';
+}
+function initialPlayerLayout():PlayerLayout {
+  try { return localStorage.getItem('runstate-public-player') === 'album' ? 'album' : 'headphones'; }
+  catch { return 'headphones'; }
 }
 export default function App(){
   const [page,setPage]=useState<Page>(initialPage);
-  const [appearance,setAppearance]=useState<Appearance>(initialAppearance);
+  const [appearanceChoice,setAppearanceChoice]=useState<AppearanceChoice>(initialAppearance);
+  const [appearance,setAppearance]=useState<Appearance>(()=>runAppearance(appearanceChoice));
+  const [playerLayout,setPlayerLayout]=useState<PlayerLayout>(initialPlayerLayout);
   const [energy,setEnergy]=useState<Energy>(null);
   const [run,setRun]=useState<DemoRun>(()=>exampleRun(null));
-  const [finished,setFinished]=useState<DemoRun[]>([]);
+  const [historyRuns,setHistoryRuns]=useState<DemoRun[]>(exampleHistory);
   const [revision,setRevision]=useState(0);
   const [paused,setPaused]=useState(false);
   const [sheet,setSheet]=useState<'settings'|'music'|'map'|null>(null);
   const phone=useRef<HTMLDivElement>(null);
   const activePage=pages.find(p=>p.id===page)!;
   function navigate(next:Page){
-    if(next==='countdown'||next==='active'||next==='music')setRun(exampleRun(energy));
+    if(next==='countdown'||next==='active'||next==='music'){
+      setRun(exampleRun(energy));
+      setAppearance(runAppearance(appearanceChoice));
+    }
     setPaused(false);setPage(next);setSheet(null);setRevision(v=>v+1);
     history.replaceState(null,'',`#${next}`);
   }
   useEffect(()=>{
-    const onHash=()=>{const next=initialPage();if(next==='countdown'||next==='active'||next==='music')setRun(exampleRun(energy));setPaused(false);setPage(next);setSheet(null);setRevision(v=>v+1);};
+    const onHash=()=>{const next=initialPage();if(next==='countdown'||next==='active'||next==='music'){setRun(exampleRun(energy));setAppearance(runAppearance(appearanceChoice));}setPaused(false);setPage(next);setSheet(null);setRevision(v=>v+1);};
     window.addEventListener('hashchange',onHash);return()=>window.removeEventListener('hashchange',onHash);
-  },[energy]);
+  },[energy,appearanceChoice]);
   function begin(){setRun(exampleRun(energy));navigate('countdown');}
   function finish(next:DemoRun){
     const saved={...next,id:`example-finished-${Date.now()}`};
-    setRun(saved);setFinished(old=>[saved,...old]);navigate('complete');
+    setRun(saved);setHistoryRuns(old=>[saved,...old]);navigate('complete');
   }
   function updateRun(next:DemoRun){
-    setRun(next);setFinished(old=>old.some(r=>r.id===next.id)?old.map(r=>r.id===next.id?next:r):[next,...old]);
+    setRun(next);setHistoryRuns(old=>old.some(r=>r.id===next.id)?old.map(r=>r.id===next.id?next:r):[next,...old]);
   }
-  function reset(){setEnergy(null);setRun(exampleRun(null));setFinished([]);navigate('opening');}
-  function chooseAppearance(next:Appearance){
-    setAppearance(next);try{localStorage.setItem('runstate-public-appearance',next);}catch{/* Optional preference only. */}
+  function deleteRun(id:string){
+    setHistoryRuns(old=>old.filter(item=>item.id!==id));
+    if(run.id===id)setRun(exampleRun(energy));
+  }
+  function reset(){setEnergy(null);setRun(exampleRun(null));setHistoryRuns(exampleHistory);navigate('opening');}
+  function chooseAppearance(next:AppearanceChoice){
+    setAppearanceChoice(next);setAppearance(runAppearance(next));
+    try{localStorage.setItem('runstate-public-appearance',next);}catch{/* Optional preference only. */}
+  }
+  function choosePlayerLayout(next:PlayerLayout){
+    setPlayerLayout(next);
+    try{localStorage.setItem('runstate-public-player',next);}catch{/* Optional preference only. */}
   }
   useEffect(()=>{
     if(!sheet)return;
@@ -94,14 +122,30 @@ export default function App(){
           <div className="screen-content" inert={sheet!==null}>
             {page==='opening'&&<Opening key={revision} onContinue={()=>navigate('start')}/>}
             {page==='start'&&<StartScreen key={revision} energy={energy} onEnergy={setEnergy} onStart={begin} onHistory={()=>navigate('history')} onSettings={()=>setSheet('settings')} onMusic={()=>setSheet('music')} onMap={()=>setSheet('map')}/>}
-            {(page==='countdown'||page==='active'||page==='music')&&<ActiveRun key={revision} appearance={appearance} initialMode={page} run={run} onFinish={finish} onCancel={()=>navigate('start')} onMap={()=>setSheet('map')} onStarted={()=>{setPage('active');history.replaceState(null,'','#active');}} onPausedChange={setPaused}/>}
+            {(page==='countdown'||page==='active'||page==='music')&&<ActiveRun key={revision} appearance={appearance} playerLayout={playerLayout} initialMode={page} run={run} onFinish={finish} onCancel={()=>navigate('start')} onMap={()=>setSheet('map')} onStarted={()=>{setPage('active');history.replaceState(null,'','#active');}} onPausedChange={setPaused}/>}
             {page==='complete'&&<CompleteScreen key={revision} run={run} onChange={updateRun} onHistory={()=>{updateRun(run);navigate('history');}} onNewRun={()=>navigate('start')}/>}
-            {page==='history'&&<HistoryScreen key={revision} runs={[...finished,...exampleHistory]} onBack={()=>navigate('start')}/>}
+            {page==='history'&&<HistoryScreen key={revision} runs={historyRuns} onDelete={deleteRun} onBack={()=>navigate('start')}/>}
           </div>
           {sheet&&<div className="preview-sheet-backdrop" onClick={()=>setSheet(null)}><section className="preview-sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title" onClick={e=>e.stopPropagation()}><button className="sheet-close" onClick={()=>setSheet(null)} aria-label="Close"><Cross2Icon/></button>
             <span className="sheet-eyebrow">RUNSTATE PREVIEW</span>
-            <h2 id="sheet-title">{sheet==='settings'?'Run appearance':sheet==='music'?'Music within reach':'A view of your route'}</h2>
-            {sheet==='settings'?<><p>The countdown and Active Run screen share your choice.</p><div className="theme-choices"><button onClick={()=>chooseAppearance('night')} aria-pressed={appearance==='night'}><span className="theme-swatch dark-swatch"/>Dark</button><button onClick={()=>chooseAppearance('day')} aria-pressed={appearance==='day'}><span className="theme-swatch light-swatch"/>Light</button></div><button className="sheet-primary" onClick={()=>setSheet(null)}>Done</button></>
+            <h2 id="sheet-title">{sheet==='settings'?'Run settings':sheet==='music'?'Music within reach':'A view of your route'}</h2>
+            {sheet==='settings'?<>
+              <fieldset className="display-options"><legend>Run appearance</legend>
+                <div className="theme-choices">
+                  <button onClick={()=>chooseAppearance('night')} aria-pressed={appearanceChoice==='night'}>Dark</button>
+                  <button onClick={()=>chooseAppearance('day')} aria-pressed={appearanceChoice==='day'}>Light</button>
+                  <button onClick={()=>chooseAppearance('auto')} aria-pressed={appearanceChoice==='auto'}>Auto</button>
+                </div>
+                <p>Auto uses Light from 7 AM to 7 PM.</p>
+              </fieldset>
+              <fieldset className="display-options"><legend>Music player layout</legend>
+                <div className="theme-choices">
+                  <button onClick={()=>choosePlayerLayout('headphones')} aria-pressed={playerLayout==='headphones'}>Headphones</button>
+                  <button onClick={()=>choosePlayerLayout('album')} aria-pressed={playerLayout==='album'}>Album cover</button>
+                </div>
+                {playerLayout==='album'&&<p>This preview shows RunState’s background for unavailable album artwork.</p>}
+              </fieldset>
+              <button className="sheet-primary" onClick={()=>setSheet(null)}>Done</button></>
             :sheet==='music'?<><img className="sheet-music-art" src={asset('start-music.jpg')} alt="RunState headphones artwork"/><p>During a run, tap Spotify Music to switch from distance to the player. Try the silent example controls here.</p><button className="sheet-primary" onClick={()=>navigate('music')}>Explore the player <ArrowRightIcon/></button></>
             :<><div className="map-demo-graphic" aria-hidden="true"><svg viewBox="0 0 300 200"><path d="M0 72H300M0 140H300M75 0V200M210 0V200" stroke="#cfdbcb" strokeWidth="12"/><path d="M60 159Q70 32 150 61T247 155" stroke="#71896b" strokeWidth="5" fill="none" strokeLinecap="round"/><circle cx="60" cy="159" r="8" fill="#7353ef"/><circle cx="247" cy="155" r="8" fill="#315b45"/></svg></div><p>The Android app can show your recorded route. This illustration is fictional; the preview does not request your location.</p><button className="sheet-primary" onClick={()=>setSheet(null)}>Back to the screen</button></>}
           </section></div>}

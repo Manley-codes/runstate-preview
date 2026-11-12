@@ -122,4 +122,13 @@
 .rs-start-shoe-archived>span{flex:1}.rs-start-shoe-archived small{display:block;color:#677262;font-size:12px}
 .rs-start-shoe-archived>button{height:48px;padding:10px 12px;border:0;background:none;color:#293326;font-size:14px;font-weight:500;line-height:20px;letter-spacing:.1px}
 @media(prefers-reduced-motion:reduce){.rs-opening-wordmark{animation:none}.rs-start-ready-glow{animation:none}}
+@media(prefers-reduced-motion:no-preference){
+  .rs-start-energy-choices.is-entering>button{--entry-delay:0ms;
+    animation:rs-start-entry-travel 680ms cubic-bezier(.22,1,.36,1) var(--entry-delay) backwards,
+              rs-start-entry-fade 150ms linear var(--entry-delay) backwards}
+  .rs-start-energy-choices.is-entering>button:nth-child(2){--entry-delay:120ms}
+  .rs-start-energy-choices.is-entering>button:nth-child(3){--entry-delay:240ms}
+}
+@keyframes rs-start-entry-travel{from{transform:translateX(443.08px) rotate(4deg)}to{transform:none}}
+@keyframes rs-start-entry-fade{from{opacity:0}to{opacity:1}}
 

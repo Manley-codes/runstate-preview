@@ -73,12 +73,7 @@
 .assembly-app .player-progress path{fill:none;stroke-width:1.5;stroke-linecap:round;}
 .assembly-app .player-progress-remaining{stroke:rgba(255,255,255,.3);}
 .assembly-app .player-progress-played{stroke:#f2f6eb;}
-.assembly-app .player-transport{position:absolute;top:205px;left:69.5px;width:170px;display:flex;align-items:center;justify-content:space-between;}
-.assembly-app .player-transport button{display:grid;place-items:center;border:0;cursor:pointer;border-radius:50%;}
-.assembly-app .player-skip{width:52px;height:52px;flex:none;background:transparent;color:var(--ink);}
-.assembly-app .player-skip svg{width:26px;height:26px;}
 .assembly-app .player-play{position:absolute;left:210px;top:156px;display:grid;place-items:center;width:48px;height:48px;border:0;border-radius:50%;background:#dce7cf;color:#253a2c;cursor:pointer;}
-.assembly-app .player-play.is-playing{border-radius:16px;}
 .assembly-app .player-play svg{width:24px;height:24px;}
 .assembly-app .circle-player button:focus-visible,.assembly-app .circle-player a:focus-visible{outline:2px solid var(--ink);outline-offset:3px;}
 .assembly-app .circle-player button:active{transform:scale(.94);}
@@ -139,3 +134,54 @@
 @media(prefers-reduced-motion:reduce){.assembly-app *{animation:none!important;}}
 
 .assembly-app *{box-sizing:border-box;}
+
+/* The accepted Android controls share the 309-unit dial with the distance reading. */
+.assembly-app .circle-player[data-player-layout] .player-background-scrim{
+  background:linear-gradient(180deg,rgba(12,19,15,.12) 0%,transparent 28%,rgba(13,20,17,.12) 43%,rgba(13,20,17,.62) 67%,#151d19 100%);
+}
+.assembly-app .circle-player[data-player-layout=album] .player-surface{background:#17211d}
+.assembly-app .circle-player .player-service,
+.assembly-app .circle-player .player-close{z-index:4}
+.assembly-app .circle-player .player-service{left:94px;pointer-events:auto}
+.assembly-app .circle-player .player-close{width:44px;height:44px;left:171px;top:58px}
+.assembly-app .circle-player .player-metadata{top:138px;left:98.5px;width:112px;text-align:center;z-index:3;pointer-events:auto;text-shadow:0 1px 5px #07110ce6}
+.assembly-app .circle-player .player-metadata strong{font-size:16px;line-height:21px;letter-spacing:.05px}
+.assembly-app .circle-player .player-metadata span{font-size:12px;margin-top:1px;color:#d8ded8}
+.assembly-app .circle-player .player-play{left:127px;top:211px;width:55px;height:55px;border-radius:50%;z-index:3;background:rgba(220,231,207,.82);color:#253a2c;box-shadow:none}
+.assembly-app .circle-player .player-play svg{width:26px;height:26px}
+.assembly-app .player-side-zones{position:absolute;left:30.5px;top:30.5px;width:248px;height:248px;overflow:hidden;border-radius:50%;z-index:2;pointer-events:none}
+.assembly-app .player-zone{position:absolute;top:15px;width:88px;height:218px;border:0;padding:0;cursor:pointer;color:#f0f4ea;pointer-events:auto;background:transparent;isolation:isolate;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+.assembly-app .player-zone-left{left:0;border-radius:100% 12px 28px 100%;--direction:-1}
+.assembly-app .player-zone-right{right:0;border-radius:12px 100% 100% 28px;--direction:1}
+.assembly-app .player-zone::before{content:'';position:absolute;inset:0;opacity:.3;transition:opacity .25s;background:radial-gradient(ellipse at 0% 50%,rgba(224,237,211,.2),transparent 75%);z-index:-1}
+.assembly-app .player-zone-right::before{transform:scaleX(-1)}
+.assembly-app .player-zone:hover::before{opacity:1}
+.assembly-app .player-zone .zone-direction{position:absolute;top:6px;left:14px;width:56px;height:204px;display:block;animation:direction-breathe 5.464s ease-in-out infinite;pointer-events:none}
+.assembly-app .player-zone-right .zone-direction{left:18px}
+.assembly-app .zone-direction>svg{display:block;width:100%;height:100%;opacity:.5;filter:drop-shadow(0 1px 4px #101910b3)}
+.assembly-app .zone-trail{position:absolute;inset:0;transform:translateX(calc(var(--direction)*-10px));opacity:.24;mask-image:linear-gradient(180deg,transparent 8%,#000 30%,#000 70%,transparent 92%);pointer-events:none}
+.assembly-app .zone-trail svg{display:block;width:100%;height:100%;overflow:visible}
+.assembly-app .zone-trail path{fill:none;stroke:currentColor;stroke-width:.8px;vector-effect:non-scaling-stroke}
+.assembly-app .zone-light{position:absolute;inset:-3px;color:#fff;mask-image:linear-gradient(180deg,transparent 25%,#000 45%,#000 55%,transparent 75%);mask-size:100% 250%;animation:arrow-light-pass 5.464s ease-in-out infinite;pointer-events:none}
+.assembly-app .zone-light svg{position:absolute;inset:3px;width:calc(100% - 6px);height:calc(100% - 6px);filter:blur(.5px) drop-shadow(0 0 5px #ffffffb3)}
+.assembly-app .player-zone .zone-feedback{position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at 0% 50%,rgba(225,238,214,.4),transparent 80%);animation:zone-response .5s ease-out both}
+.assembly-app .player-zone-right .zone-feedback{transform:scaleX(-1)}
+.assembly-app .circle-player .player-zone:active{transform:none}
+.assembly-app .circle-player .player-zone:active .zone-direction{opacity:1}
+.assembly-app .circle-player .player-zone:focus-visible{outline:2px solid #e5eedd;outline-offset:-5px}
+.assembly-app .player-centered-progress{position:absolute;left:123.5px;top:181px;z-index:3;pointer-events:none}
+@keyframes direction-breathe{0%,100%{opacity:.68;transform:translateX(0)}24%{opacity:.94;transform:translateX(calc(var(--direction)*1px))}52%{opacity:.78;transform:translateX(0)}76%{opacity:.9;transform:translateX(calc(var(--direction)*1px))}}
+@keyframes arrow-light-pass{0%{mask-position:0 100%;opacity:0}18%{opacity:.64}62%{opacity:.64}84%,100%{mask-position:0 0%;opacity:0}}
+@keyframes zone-response{from{opacity:1}to{opacity:0}}
+.assembly-app .circle-player[data-reduced-motion=true] .zone-direction{animation:none;opacity:.85}
+.assembly-app .circle-player[data-reduced-motion=true] .zone-light{animation:none;opacity:0}
+.assembly-app .circle-player[data-reduced-motion=true] .zone-feedback{animation:none;opacity:0}
+@media(prefers-reduced-motion:reduce){.assembly-app .zone-direction{animation:none;opacity:.85}.assembly-app .zone-light,.assembly-app .zone-feedback{animation:none;opacity:0}}
+.assembly-app .assembled .tile-pace,.assembly-app .assembled .tile-paceRight,.assembly-app .full-pace{transition:translate .24s ease-out}
+.assembly-app[data-music-open=true] .tile-pace,.assembly-app[data-music-open=true] .tile-paceRight,.assembly-app[data-music-open=true] .full-pace{translate:-62.5px 0}
+.assembly-app .companion-pace{position:absolute;left:258px;width:113px;z-index:4;align-items:center;text-align:center;padding:0 4px;border-radius:10px;background:#1b1d20;animation:pace-companion-in .24s ease-out both}
+.assembly-app[data-theme=day] .companion-pace{background:transparent;border:1px solid rgba(78,126,143,.3)}
+.assembly-app .companion-pace .compact-value{white-space:nowrap}
+.assembly-app[data-music-open=true] .full-pace .compact-value,.assembly-app .companion-pace .compact-value{font-family:CompletionNumbers,Barlow,sans-serif;font-weight:500}
+.assembly-app[data-music-open=true] .full-pace .compact-value span,.assembly-app .companion-pace .compact-value span{margin-left:.16em;font:inherit;color:inherit}
+@keyframes pace-companion-in{0%,62%{opacity:0}100%{opacity:1}}

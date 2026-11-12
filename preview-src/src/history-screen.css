@@ -24,5 +24,19 @@
 .nh-record-toggle,.nh-filters button{letter-spacing:.5px}
 .nh-record-date>span{letter-spacing:.7px}
 .nh-after-energy{letter-spacing:.1px;font-weight:500}
+.nh-record-actions{display:flex;align-items:center;justify-content:space-between;position:relative}
+.nh-record-actions details{position:relative}
+.nh-record-actions summary{display:grid;place-items:center;width:44px;height:44px;list-style:none;cursor:pointer;color:var(--nh-row-muted);font:24px/1 Arial,sans-serif}
+.nh-record-actions summary::-webkit-details-marker{display:none}
+.nh-record-actions summary:focus-visible{outline:2px solid currentColor}
+.nh-record-actions details button{position:absolute;z-index:2;right:0;top:100%;width:max-content;background:#272b28;color:#ffb4ab;padding:12px 20px;border:0;border-radius:8px;box-shadow:0 4px 14px #0005}
+.nh-screen .nh-reflection-song{font-size:14px;font-weight:500;line-height:20px;color:var(--nh-row-accent);margin:6px 0 12px}
+.nh-delete-backdrop{position:absolute;inset:0;z-index:8;display:grid;place-items:center;background:#0008;padding:22px}
+.nh-delete-card{width:100%;max-width:340px;padding:24px;background:#252a26;color:#f1f4ec;border-radius:22px;box-shadow:0 8px 30px #0005}
+.nh-delete-card h2{font-size:22px;line-height:28px;margin:0 0 12px}
+.nh-delete-card p{font-size:14px;line-height:20px;margin:8px 0}
+.nh-delete-card>div{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}
+.nh-delete-card button{border:0;background:transparent;color:inherit;padding:8px 12px;min-height:44px}
+.nh-delete-card button:last-child{color:#ffb4ab}
 .nh-evidence-tabs button{line-height:20px}
 .nh-note h3{padding-top:14px;font-size:10px;letter-spacing:1px;color:var(--nh-row-muted)}.nh-note p{font-size:13px;line-height:20px;color:var(--nh-row-ink)}

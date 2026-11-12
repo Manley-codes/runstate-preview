@@ -1,6 +1,6 @@
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { cubicBezier, useReducedMotion } from 'motion/react';
-import { PauseIcon, PlayIcon, StopwatchIcon, Crosshair1Icon, TrackPreviousIcon, TrackNextIcon, Cross2Icon } from '@radix-ui/react-icons';
+import { PauseIcon, PlayIcon, StopwatchIcon, Crosshair1Icon, ChevronLeftIcon, ChevronRightIcon, Cross2Icon } from '@radix-ui/react-icons';
 import { asset, formatTime, type Appearance, type DemoRun } from './demo';
 import './active.css';
 
@@ -291,25 +291,38 @@ function WaveProgress({music,reduced}:{music:SampleMusic;reduced:boolean}) {
   </div>;
 }
 
-function CirclePlayer({music,reduced,onToggle,onSkip,onClose}:{music:SampleMusic;reduced:boolean;onToggle:()=>void;onSkip:(direction:number)=>void;onClose:()=>void}) {
+type PlayerLayout = 'headphones' | 'album';
+
+function CirclePlayer({music,reduced,onToggle,onSkip,onClose,playerLayout}:{music:SampleMusic;reduced:boolean;onToggle:()=>void;onSkip:(direction:number)=>void;onClose:()=>void;playerLayout:PlayerLayout}) {
   const track=sampleTracks[music.index];
   const closeButton=useRef<HTMLButtonElement>(null);
+  const [feedback,setFeedback]=useState({direction:0,sequence:0});
+  function skip(direction:number) {
+    setFeedback(previous=>({direction,sequence:previous.sequence+1}));
+    onSkip(direction);
+  }
   useEffect(()=>{closeButton.current?.focus({preventScroll:true});},[]);
-  return <section className="circle-player" data-player-layout="headphones" id="circle-player" aria-label="Example Spotify music controls"
+  return <section className="circle-player" data-player-layout={playerLayout} data-reduced-motion={reduced} id="circle-player" aria-label="Example Spotify music controls"
     onKeyDown={event=>{if(event.key==='Escape'){event.stopPropagation();onClose();}}}>
     <div className="player-surface" aria-hidden="true">
-      <img className="player-background-art" src={asset('start-music.jpg')} alt="" draggable={false}/>
+      {playerLayout==='headphones'&&<img className="player-background-art" src={asset('start-music.jpg')} alt="" draggable={false}/>}
       <div className="player-background-scrim"/>
     </div>
     <span className="player-service"><img src={asset('spotify-icon-white.svg')} alt="Spotify"/></span>
     <button ref={closeButton} className="player-close" onClick={onClose} aria-label="Close music player"><Cross2Icon/></button>
     <div className="player-metadata" aria-live="polite" aria-atomic="true"><strong>{track.title}</strong><span>{track.artist}</span></div>
-    <button className={'player-play '+(music.playing?'is-playing':'')} onClick={onToggle} aria-label={music.playing?'Pause sample music':'Play sample music'}>{music.playing?<PauseIcon/>:<PlayIcon/>}</button>
-    <div className="player-transport" role="group" aria-label="Sample music controls">
-      <button className="player-skip" onClick={()=>onSkip(-1)} aria-label="Previous sample song"><TrackPreviousIcon/></button>
-      <WaveProgress music={music} reduced={reduced}/>
-      <button className="player-skip" onClick={()=>onSkip(1)} aria-label="Next sample song"><TrackNextIcon/></button>
+    <div className="player-side-zones" role="group" aria-label="Track controls">
+      <button className="player-zone player-zone-left" onClick={()=>skip(-1)} aria-label="Previous sample song">
+        <span className="zone-direction" aria-hidden="true"><ChevronLeftIcon viewBox="4 2.9 5.1 9.2" preserveAspectRatio="none"/><span className="zone-trail"><svg viewBox="4 2.9 5.1 9.2" preserveAspectRatio="none"><path d="M8.86462 3.84188L5.43521 7.49991L8.86462 11.1579"/></svg></span><span className="zone-light"><ChevronLeftIcon viewBox="4 2.9 5.1 9.2" preserveAspectRatio="none"/></span></span>
+        {feedback.direction===-1&&<span key={feedback.sequence} className="zone-feedback" aria-hidden="true"/>}
+      </button>
+      <button className="player-zone player-zone-right" onClick={()=>skip(1)} aria-label="Next sample song">
+        <span className="zone-direction" aria-hidden="true"><ChevronRightIcon viewBox="5.9 2.9 5.1 9.2" preserveAspectRatio="none"/><span className="zone-trail"><svg viewBox="5.9 2.9 5.1 9.2" preserveAspectRatio="none"><path d="M6.1356 3.84182L9.565 7.49985L6.1356 11.1579"/></svg></span><span className="zone-light"><ChevronRightIcon viewBox="5.9 2.9 5.1 9.2" preserveAspectRatio="none"/></span></span>
+        {feedback.direction===1&&<span key={feedback.sequence} className="zone-feedback" aria-hidden="true"/>}
+      </button>
     </div>
+    <button className={'player-play '+(music.playing?'is-playing':'')} onClick={onToggle} aria-label={music.playing?'Pause sample music':'Play sample music'}>{music.playing?<PauseIcon/>:<PlayIcon/>}</button>
+    <div className="player-centered-progress"><WaveProgress music={music} reduced={reduced}/></div>
   </section>;
 }
 
@@ -359,6 +372,7 @@ function FinishPanel({disabled,finished,circular=false,onFinish}:{disabled:boole
 
 export type ActiveRunProps = {
   appearance: Appearance;
+  playerLayout?: PlayerLayout;
   initialMode: 'countdown' | 'active' | 'music';
   run: DemoRun;
   onFinish: (run: DemoRun) => void;
@@ -368,7 +382,7 @@ export type ActiveRunProps = {
   onPausedChange?: (paused: boolean) => void;
 };
 
-export default function ActiveRun({appearance:theme,initialMode,run,onFinish,onCancel,onMap,onStarted,onPausedChange}:ActiveRunProps) {
+export default function ActiveRun({appearance:theme,playerLayout='headphones',initialMode,run,onFinish,onCancel,onMap,onStarted,onPausedChange}:ActiveRunProps) {
   const [elapsed,setElapsed]=useState(initialMode==='countdown'?0:11.3);
   const [runSeconds,setRunSeconds]=useState(0);
   const [runPaused,setRunPaused]=useState(false);
@@ -453,7 +467,7 @@ export default function ActiveRun({appearance:theme,initialMode,run,onFinish,onC
     music:<button ref={musicButton} disabled={!assembled} className="music-content" onClick={()=>musicOpen?closeMusic():setMusicOpen(true)} aria-expanded={musicOpen} aria-controls={musicOpen?'circle-player':undefined} aria-label={musicOpen?'Close Spotify Music':'Open Spotify Music'}><img src={asset('start-music.jpg')} alt=""/><strong>Spotify<br/>Music</strong></button>,
     split:<div className="small-content"><div className="small-value">{run.splitPace}<span>/mi</span></div><span className="metric-label">This mile</span></div>,
   };
-  return <div ref={viewport} className="assembly-app" data-phase={assembled?(runPaused?'Paused':'Running'):'Counting down'} data-theme={theme} data-finish-layout="circle" data-run-paused={runPaused} data-elapsed={elapsed.toFixed(3)}>
+  return <div ref={viewport} className="assembly-app" data-phase={assembled?(runPaused?'Paused':'Running'):'Counting down'} data-theme={theme} data-music-open={assembled&&musicOpen} data-finish-layout="circle" data-run-paused={runPaused} data-elapsed={elapsed.toFixed(3)}>
     <div className={'run-canvas '+(assembled?'assembled':'counting')+(count<=3&&!assembled?' final-counts':'')}
       style={{height:designHeight,transform:`translate(-50%, -50%) scale(${scale})`}}>
       {theme==='night'?<NightSpecks/>:<DayAtmosphere/>}
@@ -465,14 +479,20 @@ export default function ActiveRun({appearance:theme,initialMode,run,onFinish,onC
         style={{left:mix(141,42,frameProgress),top:mix(countdownTop,214,frameProgress),width:mix(112,309,frameProgress),height:mix(324,309,frameProgress),
           borderRadius:mix(1,155,frameProgress),borderColor:`rgba(${tileColors[theme].grid},${frameOpacity})`,backgroundColor:'transparent'}}/>
       {arrangement.map((id,index)=><Tile key={id} id={id} index={index} elapsed={elapsed} reduced={reduced} theme={theme} countdownTop={countdownTop} pauseAmount={pauseAmount} compactPace>{tileContents[id]}</Tile>)}
-      {assembled&&<div className="pace-content full-pace" style={{top:mix(546,532,pauseAmount),height:mix(104,76,pauseAmount),opacity:assemblyProgress(elapsed,.38,.19,reduced)}}>
-        <span className="metric-label">Average pace</span><div className="compact-value" style={{fontSize:mix(49,43,pauseAmount)}}>{run.averagePace}<span>/mi</span></div>
-      </div>}
+      {assembled&&<>
+        <div className="pace-content full-pace" style={{top:mix(546,532,pauseAmount),height:mix(104,76,pauseAmount),opacity:assemblyProgress(elapsed,.38,.19,reduced)}}>
+          <span className="metric-label">{musicOpen?'Distance':'Average pace'}</span>
+          <div className="compact-value" style={{fontSize:mix(49,43,pauseAmount)}}>{musicOpen?distance.toFixed(2):run.averagePace}<span>{musicOpen?'mi':'/mi'}</span></div>
+        </div>
+        {musicOpen&&<div className="pace-content companion-pace" style={{top:mix(546,532,pauseAmount),height:mix(104,76,pauseAmount)}}>
+          <span className="metric-label">Average pace</span><div className="compact-value" style={{fontSize:mix(28,25,pauseAmount)}}>{run.averagePace}<span>/mi</span></div>
+        </div>}
+      </>}
       <div className="hero-instrument" style={{left:42,top:mix(countdownTop+7,mix(214,207,pauseAmount),frameProgress),transform:`scale(${mix(1,.94,pauseAmount*frameProgress)})`,transformOrigin:'50% 50%'}}>
         <Instrument version="frame" count={count} elapsed={elapsed} reduced={reduced} theme={theme} visualizerFinish/>
         {!assembled&&<div className={'count-number '+(count===10?'two-digits':'')} data-number-landing="type" aria-live="off"
           style={{transform:`scale(${numberScale(elapsed,reduced)})`,transformOrigin:'50% 50%',opacity:numberTone(elapsed,reduced)}}>{count}</div>}
-        {assembled&&musicOpen?<CirclePlayer music={music} reduced={reduced} onToggle={()=>setMusic(previous=>({...previous,playing:!previous.playing}))} onSkip={skipMusic} onClose={closeMusic}/>:<div className="distance-content" aria-hidden={!assembled}
+        {assembled&&musicOpen?<CirclePlayer music={music} playerLayout={playerLayout} reduced={reduced} onToggle={()=>setMusic(previous=>({...previous,playing:!previous.playing}))} onSkip={skipMusic} onClose={closeMusic}/>:<div className="distance-content" aria-hidden={!assembled}
           style={{opacity:distanceProgress,transform:`scale(${mix(.94,1,distanceProgress)})`}}>
           <strong data-reading="distance">{distance.toFixed(2)}</strong><span className="distance-unit">mi</span><span className="metric-label">DISTANCE</span>
         </div>}

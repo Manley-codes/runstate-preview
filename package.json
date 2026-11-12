@@ -8,7 +8,8 @@
     "build": "tsc --noEmit && vite build && node scripts/export-pages.mjs",
     "preview": "vite preview --host 127.0.0.1 --port 5194 --strictPort",
     "test": "node --test scripts/verify-pages.mjs",
-    "test:opening": "node --test scripts/verify-opening.mjs"
+    "test:opening": "node --test scripts/verify-opening.mjs",
+    "test:interactions": "node --test scripts/verify-interactions.mjs"
   },
   "dependencies": {
     "@fontsource/roboto": "5.2.10",

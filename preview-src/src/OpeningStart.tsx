@@ -134,7 +134,7 @@ function StartDial({ready}:{ready:boolean}){
     <path d={'M'+(c+Math.cos(205*Math.PI/180)*r)+' '+(c+Math.sin(205*Math.PI/180)*r)+' A'+r+' '+r+' 0 0 1 '+(c+Math.cos(310*Math.PI/180)*r)+' '+(c+Math.sin(310*Math.PI/180)*r)} fill="none" stroke={'url(#'+id+'-edge)'} strokeWidth="1" strokeLinecap="round"/>
     {Array.from({length:12},(_,i)=>{const a=i*Math.PI/6-Math.PI/2;return <line key={i} x1={c+Math.cos(a)*r*.68} y1={c+Math.sin(a)*r*.68} x2={c+Math.cos(a)*r*(i%3===0?.88:.83)} y2={c+Math.sin(a)*r*(i%3===0?.88:.83)} stroke="white" strokeOpacity={i%3===0?.78:.42} strokeWidth={i%3===0?1.8:1} strokeLinecap="round"/>;})}
     <path d={'M'+(c-r*.23)+' '+(c-r*.36)+' L'+(c+r*.42)+' '+c+' L'+(c-r*.23)+' '+(c+r*.36)+' Z M'+(c-r*.12)+' '+(c-r*.20)+' L'+(c+r*.24)+' '+c+' L'+(c-r*.12)+' '+(c+r*.20)+' Z'} fill="white" fillRule="evenodd"/>
-    <line x1={c-r*.05} y1={c} x2={c+r*.12} y2={c} stroke="#f5be37" strokeWidth="5" strokeLinecap="square"/>
+    <line x1={c-r*.13} y1={c} x2={c+r*.06} y2={c} stroke="#f5be37" strokeWidth="4" strokeLinecap="butt"/>
   </svg>;
 }
 function EnergyContents({value,labelOpacity=1}:{value:Exclude<Energy,null>;labelOpacity?:number}){
@@ -175,6 +175,15 @@ export function StartScreen({energy,onEnergy,onStart,onHistory,onSettings,onMusi
   const [query,setQuery]=useState(''),[customOpen,setCustomOpen]=useState(false);
   const [brand,setBrand]=useState(''),[model,setModel]=useState(''),[nickname,setNickname]=useState('');
   const [intake,setIntake]=useState<Energy>(null),[intakeElapsed,setIntakeElapsed]=useState<number|null>(null);
+  const [entering,setEntering]=useState(()=>!energy&&!document.hidden&&!matchMedia('(prefers-reduced-motion: reduce)').matches);
+  useEffect(()=>{
+    if(!entering)return;
+    const preference=matchMedia('(prefers-reduced-motion: reduce)');
+    const settle=()=>{if(document.hidden||preference.matches)setEntering(false);};
+    preference.addEventListener('change',settle);
+    document.addEventListener('visibilitychange',settle);
+    return ()=>{preference.removeEventListener('change',settle);document.removeEventListener('visibilitychange',settle);};
+  },[entering]);
   const intakeFrame=useRef(0),sheetRef=useRef<HTMLDivElement>(null),returnFocus=useRef<HTMLElement|null>(null);
   const id=useId();
   useEffect(()=>()=>cancelAnimationFrame(intakeFrame.current),[]);
@@ -196,6 +205,7 @@ export function StartScreen({energy,onEnergy,onStart,onHistory,onSettings,onMusi
   },[sheet]);
   const selectEnergy=(value:Exclude<Energy,null>)=>{
     if(energy)return;onEnergy(value);
+    if(entering){setEntering(false);return;}
     if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;
     setIntake(value);setIntakeElapsed(0);
     let last=performance.now(),elapsed=0;
@@ -224,7 +234,10 @@ export function StartScreen({energy,onEnergy,onStart,onHistory,onSettings,onMusi
     <div className="rs-start-lower">
       <div className="rs-start-energy-section">
         <p style={{opacity:headingOpacity}} aria-hidden={!!energy}>Physical energy now · Optional</p>
-        <div className="rs-start-energy-choices" style={{opacity:energy?0:1}} aria-hidden={!!energy}>{(['Low','Moderate','High'] as const).map(value=><button key={value} className={'rs-start-energy-choice energy-'+value.toLowerCase()} onClick={()=>selectEnergy(value)} disabled={!!energy} aria-label={value+' pre-run energy'}><EnergyContents value={value}/></button>)}</div>
+        <div className={'rs-start-energy-choices'+(entering?' is-entering':'')} style={{opacity:energy?0:1}} aria-hidden={!!energy}
+          onAnimationEnd={event=>{if(event.animationName==='rs-start-entry-travel'&&event.target===event.currentTarget.lastElementChild)setEntering(false);}}>
+          {(['Low','Moderate','High'] as const).map(value=><button key={value} className={'rs-start-energy-choice energy-'+value.toLowerCase()} onClick={()=>selectEnergy(value)} disabled={!!energy} aria-label={value+' pre-run energy'}><EnergyContents value={value}/></button>)}
+        </div>
       </div>
       <button className="rs-start-plan" onClick={openPlan}>{planText}</button>
     </div>

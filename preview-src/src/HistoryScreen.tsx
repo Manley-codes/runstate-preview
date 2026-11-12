@@ -79,10 +79,32 @@ function EnergyEvidence({runs,onClose}:{runs:DemoRun[];onClose:()=>void}){
   </div>;
 }
 
-export function HistoryScreen({runs,onBack}:{runs:DemoRun[];onBack:()=>void}){
+function DeleteRunDialog({run,onCancel,onConfirm}:{run:DemoRun;onCancel:()=>void;onConfirm:()=>void}){
+  const cancel=useRef<HTMLButtonElement>(null),confirm=useRef<HTMLButtonElement>(null);
+  useEffect(()=>{cancel.current?.focus({preventScroll:true});},[]);
+  return <div className="nh-delete-backdrop" onClick={onCancel}>
+    <section role="dialog" aria-modal="true" aria-labelledby="nh-delete-title" aria-describedby="nh-delete-description"
+      className="nh-delete-card" onClick={event=>event.stopPropagation()} onKeyDown={event=>{
+        if(event.key==='Escape'){event.preventDefault();onCancel();}
+        if(event.key==='Tab'){
+          event.preventDefault();
+          (document.activeElement===cancel.current?confirm:cancel).current?.focus();
+        }
+      }}>
+      <h2 id="nh-delete-title">Delete this run?</h2>
+      <p>{run.distance.toFixed(2)} mi · {dateLabel(run.completedAt)}</p>
+      <p id="nh-delete-description">This removes this run and its reflection from the preview.</p>
+      <div><button ref={cancel} onClick={onCancel}>Cancel</button><button ref={confirm} onClick={onConfirm}>Delete run</button></div>
+    </section>
+  </div>;
+}
+
+export function HistoryScreen({runs,onBack,onDelete}:{runs:DemoRun[];onBack:()=>void;onDelete:(id:string)=>void}){
   const [sort,setSort]=useState<HistorySort>('All runs');
   const [expanded,setExpanded]=useState<string|null>(null);
   const [evidenceOpen,setEvidenceOpen]=useState(false);
+  const [deleting,setDeleting]=useState<DemoRun|null>(null);
+  const options=useRef<HTMLElement>(null);
   const [scrolled,setScrolled]=useState(false),[hasMore,setHasMore]=useState(false);
   const root=useRef<HTMLDivElement>(null),list=useRef<HTMLDivElement>(null);
   const [viewport,setViewport]=useState({scale:393/NATIVE_WIDTH,height:794*NATIVE_WIDTH/393});
@@ -125,8 +147,15 @@ export function HistoryScreen({runs,onBack}:{runs:DemoRun[];onBack:()=>void}){
             <span className="nh-record-source"><span>GPS metrics</span>{open&&<strong>{item.reflection?'Reflection saved':'Saved run'}</strong>}</span>
           </button>
           {open&&<div className="nh-record-content" id={`history-record-${item.id}`}>
-            <h3>RUNSTATE</h3><p className="nh-reflection">{item.reflection||'No reflection saved for this run.'}</p>
-            <div className="nh-no-music"><p>Music wasn’t recorded for this run.</p><p>Enable Observe music before a future run to save available song details.</p></div>
+            <div className="nh-record-actions"><h3>RUNSTATE</h3>
+              <details onBlur={event=>{if(!event.currentTarget.contains(event.relatedTarget))event.currentTarget.open=false;}}
+                onKeyDown={event=>{if(event.key==='Escape'){event.currentTarget.open=false;options.current?.focus();}}}>
+                <summary ref={options} aria-label="Run options">⋮</summary>
+                <button onClick={()=>setDeleting(item)}>Delete run</button>
+              </details>
+            </div>
+            <p className="nh-reflection">{item.reflection||'No reflection saved for this run.'}</p>
+            {item.reflection&&item.reflectionSong&&<p className="nh-reflection-song">Reflection song · {item.reflectionSong.title} — {item.reflectionSong.artist}</p>}
             <p className="nh-active-time">Active time · {formatTime(item.activeSeconds)}</p>
             {item.preEnergy&&<p className="nh-before-energy">Before run · {item.preEnergy}</p>}
             {item.note&&<section className="nh-note"><h3>YOUR NOTE</h3><p>{item.note}</p></section>}
@@ -138,5 +167,9 @@ export function HistoryScreen({runs,onBack}:{runs:DemoRun[];onBack:()=>void}){
       {!runs.length&&<section className="nh-empty"><h2>Your first run starts the story.</h2><p>Complete a run and it will appear here with its saved details and reflection.</p></section>}
     </div>
     {evidenceOpen&&<EnergyEvidence runs={runs} onClose={()=>setEvidenceOpen(false)}/>}
+    {deleting&&<DeleteRunDialog run={deleting} onCancel={()=>{setDeleting(null);options.current?.focus();}}
+      onConfirm={()=>{onDelete(deleting.id);setDeleting(null);setExpanded(null);requestAnimationFrame(()=>{
+        (list.current?.querySelector<HTMLButtonElement>('.nh-record-toggle')??root.current?.querySelector<HTMLButtonElement>('.nh-header button'))?.focus({preventScroll:true});
+      });}}/>}
   </div></div>;
 }
