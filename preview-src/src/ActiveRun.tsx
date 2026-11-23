@@ -267,9 +267,9 @@ function StartNowDial({elapsed,reduced,onStart,top}:{elapsed:number;reduced:bool
 
 // Example metadata for this silent interaction demo; no connection to Spotify.
 const sampleTracks = [
-  {title:'Good as Hell',artist:'Lizzo',duration:159},
-  {title:'Lovely Day',artist:'Bill Withers',duration:255},
-  {title:'No Role Modelz',artist:'J. Cole',duration:292},
+  {title:'Good as Hell',artist:'Lizzo',duration:159,cover:asset('album-good-as-hell.jpg')},
+  {title:'Lovely Day',artist:'Bill Withers',duration:255,cover:asset('album-lovely-day.jpg')},
+  {title:'No Role Modelz',artist:'J. Cole',duration:292,cover:asset('album-no-role-modelz.jpg')},
 ];
 type SampleMusic = {index:number; position:number; playing:boolean};
 const initialMusic:SampleMusic = {index:0,position:23,playing:true};
@@ -297,6 +297,7 @@ function CirclePlayer({music,reduced,onToggle,onSkip,onClose,playerLayout}:{musi
   const track=sampleTracks[music.index];
   const closeButton=useRef<HTMLButtonElement>(null);
   const [feedback,setFeedback]=useState({direction:0,sequence:0});
+  const artwork=playerLayout==='album'?track.cover:asset('start-music.jpg');
   function skip(direction:number) {
     setFeedback(previous=>({direction,sequence:previous.sequence+1}));
     onSkip(direction);
@@ -305,7 +306,7 @@ function CirclePlayer({music,reduced,onToggle,onSkip,onClose,playerLayout}:{musi
   return <section className="circle-player" data-player-layout={playerLayout} data-reduced-motion={reduced} id="circle-player" aria-label="Example Spotify music controls"
     onKeyDown={event=>{if(event.key==='Escape'){event.stopPropagation();onClose();}}}>
     <div className="player-surface" aria-hidden="true">
-      {playerLayout==='headphones'&&<img className="player-background-art" src={asset('start-music.jpg')} alt="" draggable={false}/>}
+      <PlayerArtwork key={artwork} src={artwork}/>
       <div className="player-background-scrim"/>
     </div>
     <span className="player-service"><img src={asset('spotify-icon-white.svg')} alt="Spotify"/></span>
@@ -324,6 +325,11 @@ function CirclePlayer({music,reduced,onToggle,onSkip,onClose,playerLayout}:{musi
     <button className={'player-play '+(music.playing?'is-playing':'')} onClick={onToggle} aria-label={music.playing?'Pause sample music':'Play sample music'}>{music.playing?<PauseIcon/>:<PlayIcon/>}</button>
     <div className="player-centered-progress"><WaveProgress music={music} reduced={reduced}/></div>
   </section>;
+}
+
+function PlayerArtwork({src}:{src:string}) {
+  const [failed,setFailed]=useState(false);
+  return failed?null:<img className="player-background-art" src={src} alt="" draggable={false} onError={()=>setFailed(true)}/>;
 }
 
 // A local hold rehearsal only: no device, persistence, Spotify or run-completion request.

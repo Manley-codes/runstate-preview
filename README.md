@@ -4,7 +4,7 @@
 
 RunState connects the numbers from a run with how you felt and the music around it. This repository presents its current Android screen design as an interactive browser walkthrough.
 
-Choose your energy, watch the countdown assemble into Active Run, bring the music player inside the distance visualizer, pause and finish, then revisit the example in History. Appearance offers Dark, Light and Auto, plus the Headphones and Album cover player layouts.
+Choose your energy, watch the countdown assemble into Active Run, bring the music player inside the distance visualizer, pause and finish, then revisit the example in History. Appearance offers Dark, Light and Auto, plus the Headphones and Album cover player layouts. Album cover displays the matching sample artwork when you change songs.
 
 **This is a simulated design preview.** This interactive preview uses example run data and sample reflections. Music controls demonstrate the experience without playing audio.
 
@@ -49,4 +49,4 @@ The older shared URLs remain usable: `start.html` opens Start, `complete.html` o
 
 See [asset notes](ASSETS.md) for the original app artwork, typography and opening-photo credits.
 
-Designed and built by Manley Johnson. Preview updated November 12, 2026.
+Designed and built by Manley Johnson. Album artwork restored November 23, 2026; the existing screen designs are retained.

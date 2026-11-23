@@ -4,7 +4,11 @@ This preview reuses the accepted RunState artwork and locally bundled opening ph
 
 - `preview-src/public/media/opening/`: the 33 opening-screen photos already bundled with the Android app. Photographer, provider and original page URLs are preserved in [opening-photo-sources.json](preview-src/public/media/opening-photo-sources.json). Layout and animation follow the native opening screen.
 - `preview-src/src/opening-first-frame.webp`: the app's existing approved collage capture, embedded in the preview bundle so a complete photo wall covers cold image loading. It uses the same credited photographs and is replaced only when every moving tile has decoded.
-- `start-music.jpg`: original RunState headphones artwork, also used inside the circular player. No third-party album cover is included in this refresh.
+- `start-music.jpg`: original RunState headphones artwork, also used inside the default circular player.
+- The optional Album cover layout uses three locally bundled demonstration covers from the existing design studies. Artwork remains the property of its respective rights holders; the preview is silent and does not load Spotify images at runtime:
+  - `album-good-as-hell.jpg`: Lizzo, Good as Hell — [Spotify track](https://open.spotify.com/track/6KgBpzTuTRPebChN0VTyzV), [original thumbnail](https://image-cdn-fa.spotifycdn.com/image/ab67616d00001e02c73afc08102af649ce32d6b4).
+  - `album-lovely-day.jpg`: Bill Withers, Menagerie / Lovely Day — [Spotify track](https://open.spotify.com/track/0bRXwKfigvpKZUurwqAlEh), [original oEmbed thumbnail](https://image-cdn-fa.spotifycdn.com/image/ab67616d00001e0267c1113f55ab816ef61d3993).
+  - `album-no-role-modelz.jpg`: J. Cole, 2014 Forest Hills Drive / No Role Modelz — original Spotify oEmbed thumbnail preserved from the earlier player study for [this track](https://open.spotify.com/track/68Dni7IE4VyPkTOH9mRWHr).
 - `start-map.jpg` and `history-running-trail.jpg`: existing app design artwork. These are decorative images, not a user's location or recorded route.
 - `spotify-icon-white.svg`: existing Spotify attribution mark. Spotify is a third-party service; this browser demonstration is silent and is not an endorsement or a working Spotify client.
 - Anton and Barlow/Barlow Condensed fonts: existing app typography. Font license notices are included in `preview-src/public/media/licenses/`.

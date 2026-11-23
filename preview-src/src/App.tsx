@@ -143,7 +143,7 @@ export default function App(){
                   <button onClick={()=>choosePlayerLayout('headphones')} aria-pressed={playerLayout==='headphones'}>Headphones</button>
                   <button onClick={()=>choosePlayerLayout('album')} aria-pressed={playerLayout==='album'}>Album cover</button>
                 </div>
-                {playerLayout==='album'&&<p>This preview shows RunState’s background for unavailable album artwork.</p>}
+                {playerLayout==='album'&&<p>Sample album artwork changes as you explore the silent music controls.</p>}
               </fieldset>
               <button className="sheet-primary" onClick={()=>setSheet(null)}>Done</button></>
             :sheet==='music'?<><img className="sheet-music-art" src={asset('start-music.jpg')} alt="RunState headphones artwork"/><p>During a run, tap Spotify Music to switch from distance to the player. Try the silent example controls here.</p><button className="sheet-primary" onClick={()=>navigate('music')}>Explore the player <ArrowRightIcon/></button></>

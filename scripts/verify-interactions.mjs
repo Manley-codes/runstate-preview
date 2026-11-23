@@ -22,6 +22,14 @@ after(async () => {
   await server?.close();
 });
 
+async function expectDecodedArtwork(player, filename) {
+  const artwork = player.locator('img.player-background-art');
+  await expect.poll(() => artwork.evaluate(image => image.src)).toBe(new URL(`media/${filename}`, address).href);
+  await expect(artwork).toBeVisible();
+  await expect.poll(() => artwork.evaluate(image => image.complete && image.naturalWidth > 0 && image.naturalHeight > 0)).toBe(true);
+  return artwork.getAttribute('src');
+}
+
 for (const [device, viewport] of Object.entries({
   phone: { width: 360, height: 740 }, desktop: { width: 1280, height: 900 }
 })) {
@@ -34,6 +42,7 @@ for (const [device, viewport] of Object.entries({
     const next = player.getByRole('button', { name: /next/i });
     const title = player.locator('.player-metadata strong');
     await expect(player).toHaveAttribute('data-player-layout', 'headphones');
+    await expectDecodedArtwork(player, 'start-music.jpg');
     const original = await title.innerText();
     await next.focus();
     await page.keyboard.press('Enter');
@@ -71,10 +80,69 @@ for (const [device, viewport] of Object.entries({
     await page.getByRole('button', { name: 'Open Spotify Music' }).click();
     await expect(player).toHaveAttribute('data-player-layout', 'album');
     await expect(page.locator('.phone-frame')).not.toHaveClass(/phone-dark/);
+    const albumSources = [];
+    for (const [index, [songTitle, filename]] of [
+      ['Good as Hell', 'album-good-as-hell.jpg'],
+      ['Lovely Day', 'album-lovely-day.jpg'],
+      ['No Role Modelz', 'album-no-role-modelz.jpg'],
+    ].entries()) {
+      if (index > 0) await next.click();
+      await expect(title).toHaveText(songTitle);
+      albumSources.push(await expectDecodedArtwork(player, filename));
+      if (process.env.RUNSTATE_PREVIEW_RECEIPTS) {
+        const dir = path.resolve(process.env.RUNSTATE_PREVIEW_RECEIPTS);
+        await mkdir(dir, { recursive: true });
+        await page.locator('.phone-frame').screenshot({ path: path.join(dir, `${device}-${filename.replace(/\.jpg$/, '.png')}`) });
+      }
+    }
+    expect(new Set(albumSources).size).toBe(3);
+    await previous.click();
+    await expect(title).toHaveText('Lovely Day');
+    await expectDecodedArtwork(player, 'album-lovely-day.jpg');
+    await previous.click();
+    await expect(title).toHaveText('Good as Hell');
+    await expectDecodedArtwork(player, 'album-good-as-hell.jpg');
     await page.reload();
     await expect(player).toHaveAttribute('data-player-layout', 'album');
+    await expect(title).toHaveText('Good as Hell');
+    await expectDecodedArtwork(player, 'album-good-as-hell.jpg');
   });
 }
+
+test('an unavailable album uses the player fallback and later artwork still loads', async t => {
+  const page = await browser.newPage({ viewport: { width: 360, height: 740 }, reducedMotion: 'reduce' });
+  t.after(() => page.close());
+  let blocked = 0;
+  await page.route('**/media/album-good-as-hell.jpg', route => {
+    blocked++;
+    return route.abort();
+  });
+  await page.goto(address + '#music');
+  const player = page.locator('#circle-player');
+  async function chooseArtwork(label) {
+    await player.getByRole('button', { name: /close/i }).click();
+    await page.getByRole('button', { name: /appearance/i }).filter({ visible: true }).click();
+    const settings = page.getByRole('dialog');
+    await settings.getByRole('button', { name: label, exact: true }).click();
+    await settings.getByRole('button', { name: 'Done' }).click();
+    await page.getByRole('button', { name: 'Open Spotify Music' }).click();
+  }
+  await chooseArtwork('Album cover');
+  await expect.poll(() => blocked).toBeGreaterThan(0);
+  await expect(player.locator('img.player-background-art')).toHaveCount(0);
+  await expect(player.locator('.player-surface')).toBeVisible();
+  await expect(player.locator('.player-metadata strong')).toHaveText('Good as Hell');
+  await expect(player.getByRole('button', { name: /pause.*music/i })).toBeEnabled();
+  await player.getByRole('button', { name: /next/i }).click();
+  await expect(player.locator('.player-metadata strong')).toHaveText('Lovely Day');
+  await expectDecodedArtwork(player, 'album-lovely-day.jpg');
+  await player.getByRole('button', { name: /previous/i }).click();
+  await expect(player.locator('.player-metadata strong')).toHaveText('Good as Hell');
+  await expect(player.locator('img.player-background-art')).toHaveCount(0);
+  await chooseArtwork('Headphones');
+  await expect(player).toHaveAttribute('data-player-layout', 'headphones');
+  await expectDecodedArtwork(player, 'start-music.jpg');
+});
 
 test('Start energy tiles enter in order, settle, and honor reduced motion', async t => {
   const page = await browser.newPage({ viewport: { width: 393, height: 852 }, reducedMotion: 'no-preference' });

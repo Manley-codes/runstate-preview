@@ -136,6 +136,15 @@ test('fonts, license notices, artwork and attribution metadata are bundled local
   assert.match(combined, /Anton/i);
   assert.match(combined, /Barlow/i);
   for (const name of ['start-music.jpg', 'start-map.jpg', 'history-running-trail.jpg', 'spotify-icon-white.svg']) await expectResource(`./media/${name}`, 'index.html');
+  const albumDigests = new Set();
+  for (const name of ['album-good-as-hell.jpg', 'album-lovely-day.jpg', 'album-no-role-modelz.jpg']) {
+    await expectResource(`./media/${name}`, 'index.html');
+    const bytes = await readFile(path.join(dist, 'media', name));
+    assert.ok(bytes.length > 1000, `Empty/truncated sample album: ${name}`);
+    assert.equal(bytes.readUInt16BE(0), 0xffd8, `Invalid JPEG header: ${name}`);
+    albumDigests.add(createHash('sha256').update(bytes).digest('hex'));
+  }
+  assert.equal(albumDigests.size, 3, 'Each sample song must retain its own album artwork');
 });
 
 test('export contains no private run files, audio, credentials, source maps or local machine paths', async () => {
