@@ -234,7 +234,7 @@ export function StartScreen({energy,onEnergy,onStart,onHistory,onSettings,onMusi
         <AgentRing selected={energy} onClear={clearEnergy} intakeElapsed={intakeElapsed}/>
         <div className="rs-start-ready"><span>READY</span><strong>TO RUN</strong><small>GPS Ready</small></div>
       </div>
-      <button className="rs-start-trails-pill" onClick={()=>openTrails()}>Houston trails <span aria-hidden="true">›</span></button>
+      <button className="rs-start-trails-pill" onClick={()=>openTrails()}>Trails <span aria-hidden="true">›</span></button>
       <div className="rs-start-control-cluster">
         <div className="rs-start-side-controls">
           <button className="rs-start-side-control rs-start-shoes" onClick={()=>setSheet('shoes')} aria-label="Choose shoes" title={shoe?[shoe.brand,shoe.nickname||shoe.model].join(' '):undefined}><ShoeArt/></button>

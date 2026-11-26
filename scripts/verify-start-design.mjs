@@ -53,7 +53,7 @@ for(const [device,viewport] of Object.entries({phone:{width:360,height:740},desk
     const navigation=page.locator('.rs-start-screen nav');
     await expect(navigation.getByRole('button')).toHaveText(['Map','Goal','Run','Settings','Activity']);
     const navBox=await navigation.boundingBox();expect(navBox.y).toBeGreaterThan(d.y+d.height);
-    await expect(page.getByRole('button',{name:/Houston trails/i})).toBeVisible();
+    await expect(page.getByRole('button',{name:'Trails',exact:true})).toBeVisible();
     await capture(page,device+'-start-current');
     await navigation.getByRole('button',{name:'Log History',exact:true}).click();
     await expect(page.locator('.phone-screen')).toHaveAttribute('data-screen','history');
