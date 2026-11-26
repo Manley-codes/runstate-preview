@@ -1,4 +1,4 @@
-# RunState â€” interactive app preview
+# RunState interactive app preview
 
 [Explore the preview](https://manley-codes.github.io/runstate-preview/) Â· [Android app and backend](https://github.com/Manley-codes/RunState)
 
