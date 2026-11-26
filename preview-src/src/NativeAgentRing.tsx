@@ -1,13 +1,13 @@
 import { useEffect, useRef } from 'react';
 
-type Props = { size?: number; intakeElapsed?: number | null; className?: string };
+type Props = { size?: number; intakeElapsed?: number | null; className?: string; emphasized?: boolean };
 
 /** Direct port of ui/RunAgentVisualizer.kt. Motion is decorative, not audio analysis. */
-export function NativeAgentRing({size=104,intakeElapsed=null,className}:Props) {
+export function NativeAgentRing({size=104,intakeElapsed=null,className,emphasized=false}:Props) {
   const lines=useRef<(SVGLineElement|null)[]>([]);
   const receipt=useRef(intakeElapsed);
   receipt.current=intakeElapsed;
-  const barWidth=Math.max(1,Math.min(1.4,size*.014));
+  const barWidth=emphasized?Math.max(1.8,Math.min(2.4,size*.014)):Math.max(1,Math.min(1.4,size*.014));
   const units=(size-barWidth)/(2*(264+79.8*1.8));
   const radius=264*units;
   const values=(index:number,phase:number,time:number|null)=>{
@@ -19,7 +19,7 @@ export function NativeAgentRing({size=104,intakeElapsed=null,className}:Props) {
     const height=(9+wave*7.5+(Math.sin(index*5.31)*.5+.5)*2.5)*4.2*(1+response*.8);
     return {x1:size/2+Math.cos(angle)*radius,y1:size/2+Math.sin(angle)*radius,
       x2:size/2+Math.cos(angle)*(radius+height*units),y2:size/2+Math.sin(angle)*(radius+height*units),
-      opacity:Math.min(1,.84+wave*.12+response*.04)};
+      opacity:emphasized?1:Math.min(1,.84+wave*.12+response*.04)};
   };
   useEffect(()=>{
     let frame=0,elapsed=0,last=performance.now();
@@ -38,9 +38,10 @@ export function NativeAgentRing({size=104,intakeElapsed=null,className}:Props) {
     };
     frame=requestAnimationFrame(draw);
     return()=>cancelAnimationFrame(frame);
-  },[size]);
+  },[size,emphasized]);
   return <svg className={className} width={size} height={size} viewBox={`0 0 ${size} ${size}`} aria-hidden="true">{Array.from({length:76},(_,index)=>{
     const v=values(index,0,null),band=Math.floor(index*56/76);
-    return <line key={index} ref={el=>{lines.current[index]=el;}} x1={v.x1} y1={v.y1} x2={v.x2} y2={v.y2} stroke={band<=17?'#849b80':band<=34?'#a390b3':'#aca473'} strokeOpacity={v.opacity} strokeWidth={barWidth} strokeLinecap="round"/>;
+    const color=emphasized?(band<=17?'#72a47d':band<=34?'#b18bd2':'#d0ae63'):(band<=17?'#849b80':band<=34?'#a390b3':'#aca473');
+    return <line key={index} ref={el=>{lines.current[index]=el;}} x1={v.x1} y1={v.y1} x2={v.x2} y2={v.y2} stroke={color} strokeOpacity={v.opacity} strokeWidth={barWidth} strokeLinecap="round"/>;
   })}</svg>;
 }

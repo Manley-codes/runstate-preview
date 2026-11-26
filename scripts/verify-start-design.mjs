@@ -31,32 +31,41 @@ async function openShoes(page){
 }
 
 for(const [device,viewport] of Object.entries({phone:{width:360,height:740},desktop:{width:1280,height:900}})){
-  test(`${device}: current Start layout, retained scenery and navigation`,async t=>{
+  test(`${device}: light Start, ordered controls and retained navigation`,async t=>{
     const page=await browser.newPage({viewport,reducedMotion:'reduce'});
     t.after(()=>page.close());
+    const errors=[];page.on('pageerror',error=>errors.push(error.message));
     await page.goto(address+'#start');
     await page.evaluate(()=>document.fonts.ready);
     const start=page.locator('.rs-start-run'),shoe=page.locator('.rs-start-shoes'),music=page.locator('.rs-start-music');
-    const choices=page.locator('.rs-start-energy-choices');
+    const choices=page.locator('.rs-start-energy-choices'),trail=page.locator('.rs-start-trails-card'),greeting=page.locator('.rs-start-greeting');
     await expect(start).toBeVisible();await expect(shoe).toBeVisible();await expect(music).toBeVisible();
     await expect(choices.getByRole('button')).toHaveCount(3);
-    const [a,b,c,d]=await Promise.all([start.boundingBox(),shoe.boundingBox(),music.boundingBox(),choices.boundingBox()]);
-    expect(b.x+b.width/2).toBeLessThan(a.x+a.width/2);
-    expect(c.x+c.width/2).toBeGreaterThan(a.x+a.width/2);
-    expect(b.y+b.height/2).toBeLessThan(a.y);
-    expect(c.y+c.height/2).toBeLessThan(a.y);
-    expect(d.y).toBeGreaterThanOrEqual(a.y+a.height-3);
-    // The three controls are icons; optional labels belong to accessible names only.
-    for(const control of [start,shoe,music])await expect(control).toHaveText('');
-    await expect(page.locator('.rs-start-footer-shape')).toHaveCount(0);
-    await expect(page.getByRole('button',{name:'Plan this run',exact:true})).toHaveCount(0);
+    await expect(choices.locator('small')).toHaveText(['Running low','Steady','Energized']);
+    await expect(greeting).toHaveText(/^Good (morning|afternoon|evening), Alex$/);
+    await expect(page.locator('.rs-start-screen').getByText('Start Run',{exact:true})).toBeVisible();
+    await expect(page.locator('.rs-start-screen').getByText('GPS Ready',{exact:true})).toBeVisible();
     const navigation=page.locator('.rs-start-screen nav');
-    await expect(navigation.getByRole('button')).toHaveText(['Map','Goal','Run','Settings','Activity']);
-    const navBox=await navigation.boundingBox();expect(navBox.y).toBeGreaterThan(d.y+d.height);
-    await expect(page.getByRole('button',{name:'Trails',exact:true})).toBeVisible();
+    await expect(navigation.getByRole('button')).toHaveText(['Shoes','Goal','Run','Settings','Activity']);
+    const [startBox,choiceBox,trailBox,musicBox,greetingBox,navBox]=await Promise.all([start.boundingBox(),choices.boundingBox(),trail.boundingBox(),music.boundingBox(),greeting.boundingBox(),navigation.boundingBox()]);
+    expect(trailBox.y+trailBox.height).toBeLessThan(musicBox.y);
+    expect(musicBox.y+musicBox.height).toBeLessThan(greetingBox.y);
+    expect(greetingBox.y+greetingBox.height).toBeLessThan(choiceBox.y);
+    expect(choiceBox.y+choiceBox.height).toBeLessThanOrEqual(startBox.y+1);
+    expect(startBox.y+startBox.height).toBeLessThan(navBox.y);
+    expect(Math.abs((startBox.x+startBox.width/2)-(choiceBox.x+choiceBox.width/2))).toBeLessThan(2);
+    await expect(page.getByRole('button',{name:'Explore trails',exact:true})).toBeVisible();
+    await expect(trail.locator('img')).toHaveCount(1);
+    await expect(trail.locator('img')).not.toHaveAttribute('src',/map/);
+    await expect(page.locator('.rs-trail-background,.rs-start-footer-shape,.rs-start-map-wash')).toHaveCount(0);
+    await expect(page.getByRole('button',{name:'Plan this run',exact:true})).toHaveCount(0);
+    expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+    const modColor=await choices.locator('.energy-moderate svg').evaluate(el=>getComputedStyle(el).color);
+    expect(modColor).toBe('rgb(255, 255, 255)');
     await capture(page,device+'-start-current');
     await navigation.getByRole('button',{name:'Log History',exact:true}).click();
     await expect(page.locator('.phone-screen')).toHaveAttribute('data-screen','history');
+    expect(errors).toEqual([]);
   });
 
   test(`${device}: Goal defaults, invalid values, saved targets and canceled drafts`,async t=>{
@@ -169,7 +178,7 @@ test('a saved goal travels through countdown, completion and History',async t=>{
   await openGoal(page);
   await page.getByLabel('Distance goal',{exact:true}).fill('1');
   await page.getByRole('button',{name:'Save goal',exact:true}).click();
-  await page.getByRole('button',{name:'Start',exact:true}).click();
+  await page.getByRole('button',{name:'Start run',exact:true}).click();
   await expect(page.getByRole('button',{name:'Pause run',exact:true})).toBeEnabled({timeout:15000});
   await page.getByRole('button',{name:'Pause run',exact:true}).click();
   const finish=page.getByRole('button',{name:'Hold to finish sample run'});
@@ -183,4 +192,83 @@ test('a saved goal travels through countdown, completion and History',async t=>{
   const first=page.locator('.nh-record').first();
   if(await first.locator('.nh-record-toggle').getAttribute('aria-expanded')!=='true')await first.locator('.nh-record-toggle').click();
   await expect(first.getByText('Goal · 1 mi · Reached',{exact:true})).toBeVisible();
+});
+
+test('the fictional greeting follows local morning, afternoon and evening boundaries',async t=>{
+  for(const [hour,period] of [[4,'evening'],[5,'morning'],[11,'morning'],[12,'afternoon'],[16,'afternoon'],[17,'evening']]){
+    const page=await browser.newPage({viewport:{width:393,height:852},reducedMotion:'reduce'});
+    t.after(()=>page.close());
+    // Isolate the local-hour input without changing animation timers or Date.now.
+    await page.addInitScript(value=>{Date.prototype.getHours=function(){return value;};},hour);
+    await page.goto(address+'#start');
+    await expect(page.locator('.rs-start-greeting')).toHaveText(`Good ${period}, Alex`);
+    await page.close();
+  }
+});
+
+test('the Start Spotify badge leads to the silent sample player without connected requests',async t=>{
+  const page=await browser.newPage({viewport:{width:393,height:852},reducedMotion:'reduce'});
+  t.after(()=>page.close());
+  const outside=[];
+  const origin=new URL(address).origin;
+  page.on('request',request=>{if(/^https?:/.test(request.url())&&new URL(request.url()).origin!==origin)outside.push(request.url());});
+  await page.goto(address+'#start');
+  await page.locator('.rs-start-music').click();
+  await expect(page.getByRole('dialog')).toContainText('silent example controls');
+  await page.getByRole('button',{name:'Explore the player'}).click();
+  await expect(page.locator('.phone-screen')).toHaveAttribute('data-screen','music');
+  await expect(page.locator('audio,video,iframe')).toHaveCount(0);
+  expect(outside).toEqual([]);
+});
+
+test('a preview name stays on this browser and can be cleared to a generic greeting',async t=>{
+  const page=await browser.newPage({viewport:{width:393,height:852},reducedMotion:'reduce'});
+  t.after(()=>page.close());
+  await page.addInitScript(()=>{Date.prototype.getHours=function(){return 12;};});
+  await page.goto(address+'#start');
+  await page.getByRole('button',{name:'Run settings',exact:true}).click();
+  const settings=page.getByRole('dialog');
+  const name=settings.getByRole('textbox',{name:'Your name (optional)',exact:true});
+  await name.fill('Jamie');
+  const writes=[];page.on('request',request=>{if(request.method()!=='GET')writes.push(request.url());});
+  await settings.getByRole('button',{name:'Save name',exact:true}).click();
+  if(await settings.isVisible())await settings.getByRole('button',{name:'Done',exact:true}).click();
+  await expect(page.locator('.rs-start-greeting')).toHaveText('Good afternoon, Jamie');
+  await page.reload();
+  await expect(page.locator('.rs-start-greeting')).toHaveText('Good afternoon, Jamie');
+  await page.getByRole('button',{name:'Run settings',exact:true}).click();
+  await name.fill('');
+  await settings.getByRole('button',{name:'Save name',exact:true}).click();
+  if(await settings.isVisible())await settings.getByRole('button',{name:'Done',exact:true}).click();
+  await expect(page.locator('.rs-start-greeting')).toHaveText('Good afternoon');
+  await page.reload();
+  await expect(page.locator('.rs-start-greeting')).toHaveText('Good afternoon');
+  expect(writes).toEqual([]);
+});
+
+test('energy selection arrives without shifting the layout and can be changed; ring honors reduced motion',async t=>{
+  const page=await browser.newPage({viewport:{width:393,height:852},reducedMotion:'no-preference'});
+  t.after(()=>page.close());
+  await page.goto(address+'#start');
+  const choices=page.locator('.rs-start-energy-choices'),ring=page.locator('.rs-start-agent-ring');
+  await expect(choices).not.toHaveClass(/is-entering/);
+  const before=await page.locator('.rs-start-greeting').boundingBox();
+  await choices.getByRole('button',{name:'Moderate pre-run energy',exact:true}).click();
+  await expect(ring).toBeEnabled();
+  await expect(ring).toHaveAccessibleName('Moderate energy selected. Change energy');
+  await expect(page.getByRole('button',{name:'Start run',exact:true})).toBeEnabled();
+  await expect(page.locator('.rs-start-intake-overlay')).toHaveCount(0,{timeout:5000});
+  const after=await page.locator('.rs-start-greeting').boundingBox();
+  expect(Math.abs(before.y-after.y)).toBeLessThan(1);
+  await ring.click();
+  await expect(choices.getByRole('button',{name:'High pre-run energy',exact:true})).toBeEnabled();
+  await expect(ring).toBeDisabled();
+  const firstLine=ring.locator('line').first();
+  const moving=await firstLine.getAttribute('y2');
+  await expect.poll(()=>firstLine.getAttribute('y2')).not.toBe(moving);
+  await page.emulateMedia({reducedMotion:'reduce'});
+  await page.waitForTimeout(80);
+  const still=await firstLine.getAttribute('y2');
+  await page.waitForTimeout(300);
+  expect(await firstLine.getAttribute('y2')).toBe(still);
 });

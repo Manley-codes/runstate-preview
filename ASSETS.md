@@ -22,3 +22,10 @@ The illustrative song titles/artists are sample metadata only. No song recording
 - `media/trails/`: eight unchanged licensed Android trail photographs and OpenStreetMap-based area maps. Source URLs, attribution, modification notes and licenses are in [TRAIL-ASSETS.md](TRAIL-ASSETS.md); credits are also available inside each trail detail.
 - `ShoeArt.tsx`: RunState's original simplified gray sneaker and slightly irregular ocean-blue/white rings, ported directly from the current Android drawing.
 - `shoe-catalog.json`: 338 public brand/model names only. The owner's private product-photo collection, source download URLs and personal shoe records are not included. The public picker uses the app's text-only release presentation.
+
+## November 26 welcome Start sync
+
+- `start-runstate-wordmark.png`: approved RunState wordmark isolated from the owner-selected generated design; same unchanged PNG as Android.
+- `fonts/nunito-sans-variable.ttf`: unchanged Nunito Sans from Google Fonts, SIL Open Font License 1.1. Copyright 2016 The Nunito Sans Project Authors. Full notice in `media/licenses/nunito-sans-OFL.txt`.
+- Light gradient and subtle leaves, emphasized animated ring, pastel Energy tiles, and Start dial are direct code adaptations of the approved Android design. The Trails card reuses the credited Terry Hershey photo without a map background.
+- Alex is a fictional profile name; optional visitor names and appearance preferences stay in that browser. GPS Ready is illustrative, with no location access.

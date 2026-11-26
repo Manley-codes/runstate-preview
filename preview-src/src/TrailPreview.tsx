@@ -79,7 +79,7 @@ export function TrailBackground({onTrail,paused}:{onTrail:(id:string)=>void;paus
   </div>;
 }
 
-export function TrailBrowser({initialTrail=null,onClose}:{initialTrail?:string|null;onClose:()=>void}) {
+export function TrailBrowser({initialTrail=null,onClose,onMap}:{initialTrail?:string|null;onClose:()=>void;onMap?:()=>void}) {
   const [selected,setSelected]=useState<string|null>(initialTrail);
   const trail=houstonTrails.find(item=>item.id===selected);
   const scroll=useRef<HTMLDivElement>(null),header=useRef<HTMLElement>(null),previousSelected=useRef(selected);
@@ -93,6 +93,7 @@ export function TrailBrowser({initialTrail=null,onClose}:{initialTrail?:string|n
   return <div className="rs-trail-browser">
     <header ref={header}>{trail&&<button onClick={()=>setSelected(null)} aria-label="Back to Houston trails">‹</button>}<h2 id="trail-browser-title">{trail?trail.name:'Houston trails'}</h2><button onClick={onClose}>Close</button></header>
     <div ref={scroll} className="rs-trail-browser-scroll">
+      {!trail&&onMap&&<button className="rs-trail-open-map" onClick={onMap}>Open map</button>}
       {trail?<article className="rs-trail-detail">
         <img className="rs-trail-detail-photo" src={photo(trail)} alt={`${trail.name}: ${trail.description}`}/>
         <h3>{trail.description}</h3>

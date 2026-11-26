@@ -16,7 +16,7 @@ Explore Houston trails, choose shoes and an optional distance or time goal, then
 4. Pause the run and hold the Stop circle to finish.
 5. Choose optional post-run energy and Effort, save, and open the run in History.
 
-Desktop screen shortcuts and the mobile screen menu also let you jump directly to a feature. In History, open **Your Energy** for check-ins or expand a saved run to see its reflection. Runs, shoe mileage and songs in the walkthrough are examples held only for this browser session. The four Houston parks use credited photographs and static area maps, without live location. Settings → Start background switches between the original Hermann Park map and the optional moving trails.
+Desktop screen shortcuts and the mobile screen menu also let you jump directly to a feature. In History, open **Your Energy** for check-ins or expand a saved run to see its reflection. Runs, shoe mileage and songs in the walkthrough are examples held only for this browser session. The four Houston parks use credited photographs and static area maps, without live location. Start uses the approved light blue leaf background, a photo-led Explore trails card, and the animated music visualizer. Open map is inside Explore trails. The greeting follows local time and uses the fictional name Alex by default; Settings → Your name can save a different name in this browser only, or a blank name for a general greeting.
 
 ## Local development
 
@@ -51,4 +51,4 @@ The older shared URLs remain usable: `start.html` opens Start, `complete.html` o
 
 The complete text shoe catalog is included; private product photographs are excluded. See [trail credits](TRAIL-ASSETS.md) and [asset notes](ASSETS.md) for the original app artwork, typography and opening-photo credits.
 
-Designed and built by Manley Johnson. Approved Android Start, Goal, shoe and Houston trails designs synchronized November 25, 2026. Existing sample album artwork is retained.
+Designed and built by Manley Johnson. Approved Android Start, Goal, shoe and Houston trails designs synchronized November 26, 2026. Existing sample album artwork is retained.

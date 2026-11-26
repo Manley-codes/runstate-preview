@@ -8,8 +8,7 @@ import { GoalPanel, goalLabel } from './GoalPanel';
 import type { PreviewGoal } from './GoalPanel';
 import { ShoePicker } from './ShoePicker';
 import type { DemoShoe } from './ShoePicker';
-import { ShoeArt } from './ShoeArt';
-import { TrailBackground, TrailBrowser } from './TrailPreview';
+import { TrailBrowser } from './TrailPreview';
 import openingFirstFrame from './opening-first-frame.webp?inline';
 
 type Tile = { id: string; width: number; position?: string };
@@ -92,7 +91,7 @@ export function Opening({onContinue}:{onContinue:()=>void}) {
 
 
 /** Current Moto content: 720×1456 at 260dpi, excluding Android system bars. */
-const START_WIDTH=720/1.625, START_HEIGHT=1456/1.625, START_RING=128;
+const START_WIDTH=720/1.625, START_HEIGHT=1456/1.625, START_RING=264;
 function StartCanvas({children}:{children:ReactNode}){
   const host=useRef<HTMLDivElement>(null);
   const [scale,setScale]=useState(1);
@@ -106,7 +105,7 @@ function StartCanvas({children}:{children:ReactNode}){
 }
 
 function EnergySymbol({energy}:{energy:Exclude<Energy,null>}){
-  return <svg viewBox="0 0 18 18" aria-hidden="true">{energy==='Low'?<><circle cx="9" cy="9" r="7.56" fill="currentColor"/><circle cx="13.14" cy="6.12" r="7.02" fill="#293326"/></>:energy==='Moderate'?<g stroke="currentColor" strokeWidth="2" strokeLinecap="round">{[0,1,2].map(i=><line key={i} x1="3.6" x2="14.4" y1={18*(.29+i*.22)} y2={18*(.29+i*.22)}/>)}</g>:<><circle cx="9" cy="9" r="3.6" fill="currentColor"/><g stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">{Array.from({length:8},(_,i)=>{const a=i*Math.PI/4;return <line key={i} x1={9+Math.cos(a)*5.94} y1={9+Math.sin(a)*5.94} x2={9+Math.cos(a)*8.64} y2={9+Math.sin(a)*8.64}/>;})}</g></>}</svg>;
+  return <svg viewBox="0 0 18 18" aria-hidden="true">{energy==='Low'?<><circle cx="9" cy="9" r="7.56" fill="currentColor"/><circle cx="13.14" cy="6.12" r="7.02" fill="#dcd1e4"/></>:energy==='Moderate'?<g stroke="currentColor" strokeWidth="2" strokeLinecap="round">{[0,1,2].map(i=><line key={i} x1="3.6" x2="14.4" y1={18*(.29+i*.22)} y2={18*(.29+i*.22)}/>)}</g>:<><circle cx="9" cy="9" r="3.6" fill="currentColor"/><g stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">{Array.from({length:8},(_,i)=>{const a=i*Math.PI/4;return <line key={i} x1={9+Math.cos(a)*5.94} y1={9+Math.sin(a)*5.94} x2={9+Math.cos(a)*8.64} y2={9+Math.sin(a)*8.64}/>;})}</g></>}</svg>;
 }
 /*! Unmodified Google Material outlined paths from StartRunScreen.kt.
  * Copyright 2014 Google Inc. All Rights Reserved. Licensed under Apache-2.0.
@@ -116,7 +115,7 @@ const nativeUtilityPaths={"history":"M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L
 function UtilityIcon({kind}:{kind:'map'|'history'|'settings'}){return <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d={nativeUtilityPaths[kind]}/></svg>;}
 
 function AgentRing({selected,onClear,intakeElapsed}:{selected:Energy;onClear:()=>void;intakeElapsed:number|null}){
-  return <button className="rs-start-agent-ring" onClick={onClear} disabled={!selected} aria-label={selected?selected+' energy selected. Change energy':'Run agent ready'} title={selected?'Change energy':undefined}><NativeAgentRing size={START_RING} intakeElapsed={intakeElapsed}/></button>;
+  return <button className="rs-start-agent-ring" onClick={onClear} disabled={!selected} aria-label={selected?selected+' energy selected. Change energy':'Run agent ready'} title={selected?'Change energy':undefined}><NativeAgentRing size={START_RING} intakeElapsed={intakeElapsed} emphasized/></button>;
 }
 function StartDial({ready,entering}:{ready:boolean;entering:boolean}){
   const id=useId(),c=51,outer=102*.49,r=outer*.9;
@@ -137,7 +136,7 @@ function StartDial({ready,entering}:{ready:boolean;entering:boolean}){
   </svg>;
 }
 function EnergyContents({value,labelOpacity=1}:{value:Exclude<Energy,null>;labelOpacity?:number}){
-  return <><EnergySymbol energy={value}/><strong style={{opacity:labelOpacity}}>{value.toUpperCase()}</strong><small style={{opacity:labelOpacity}}>{value==='Low'?'Running low':value==='Moderate'?'Steady':'Energized'}</small></>;
+  return <><EnergySymbol energy={value}/><strong style={{opacity:labelOpacity}}>{value}</strong><small style={{opacity:labelOpacity}}>{value==='Low'?'Running low':value==='Moderate'?'Steady':'Energized'}</small></>;
 }
 const clamp=(value:number)=>Math.max(0,Math.min(1,value));
 function ease(x:number,x1:number,y1:number,x2:number,y2:number){
@@ -146,13 +145,14 @@ function ease(x:number,x1:number,y1:number,x2:number,y2:number){
   for(let i=0;i<20;i++){t=(low+high)/2;if(b(t,x1,x2)<x)low=t;else high=t;}
   return b(t,y1,y2);
 }
-function EnergyIntake({energy,elapsed}:{energy:Exclude<Energy,null>;elapsed:number}){
+type IntakeGeometry={tiles:{left:number;top:number;width:number;height:number}[];target:{x:number;y:number}};
+function EnergyIntake({energy,elapsed,geometry}:{energy:Exclude<Energy,null>;elapsed:number;geometry:IntakeGeometry}){
   const values:Exclude<Energy,null>[]=['Low','Moderate','High'],chosenIndex=values.indexOf(energy);
-  const width=(START_WIDTH-56)/3,top=START_HEIGHT-206,target={x:START_WIDTH/2,y:94};
+  const {target}=geometry;
   const mark=ease(elapsed/150,.32,.72,.3,1),merge=ease((elapsed-150)/320,.4,0,.2,1),travel=ease((elapsed-470)/640,.5,.02,.28,1);
   const labels=1-clamp((elapsed-470)/200);
   return <div className="rs-start-intake-overlay" aria-hidden="true">{[...values.filter(v=>v!==energy),energy].map(value=>{
-    const chosen=value===energy,index=values.indexOf(value),left=20+index*(width+8),centerX=left+width/2,centerY=top+41;
+    const chosen=value===energy,index=values.indexOf(value),{left,top,width,height}=geometry.tiles[index],centerX=left+width/2,centerY=top+height/2;
     if((chosen&&elapsed>=1110)||(!chosen&&elapsed>=470))return null;
     const scale=chosen?(elapsed<150?1+mark*.015:elapsed<470?1.015+merge*.02:1.035+travel*(.13-1.035)):1-merge*.1;
     const dx=chosen?(target.x-centerX)*travel:(chosenIndex-index)*(width+8)*.62*merge;
@@ -165,19 +165,27 @@ type StartProps={
   energy:Energy;onEnergy:(v:Energy)=>void;onStart:()=>void;onHistory:()=>void;
   onSettings:()=>void;onMusic:()=>void;onMap:()=>void;
   goal:PreviewGoal|null;onGoal:(goal:PreviewGoal|null)=>void;
-  background:'hermann'|'trails';modalOpen:boolean;
+  runnerName:string;modalOpen:boolean;
   shoe:DemoShoe|null;onShoe:(shoe:DemoShoe|null)=>void;pairs:DemoShoe[];onPairs:(pairs:DemoShoe[])=>void;
 };
 
-function NavigationSymbol({kind}:{kind:'goal'|'run'|'activity'}){
+function NavigationSymbol({kind}:{kind:'goal'|'run'|'activity'|'shoes'}){
   return <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round">
-    {kind==='goal'?<><circle cx="11" cy="13" r="8"/><circle cx="11" cy="13" r="4"/><path d="m11 13 10-10m-5 0h5v5"/></>
+    {kind==='shoes'?<><path d="M3 7 6 9 10 8 14 13 20 15Q22 16 21 19H3Z"/><path d="m3 16 17 1M10 10l-2 2m4 0-2 2"/></>:kind==='goal'?<><circle cx="11" cy="13" r="8"/><circle cx="11" cy="13" r="4"/><path d="m11 13 10-10m-5 0h5v5"/></>
       :kind==='run'?<><circle cx="15.5" cy="3.5" r="2.1" fill="currentColor" stroke="none"/><path d="m13 7-2.5 6m2.5-6-4.5 1L6 11m7-4 3 3.5h4m-9.5 2.5 4.5 3-1 5m-3.5-8L7 18l-4 2"/></>
       :<><rect x="3" y="14" width="5" height="7"/><rect x="8" y="9" width="5" height="12"/><rect x="13" y="3" width="5" height="18"/></>}
   </svg>;
 }
 
-export function StartScreen({energy,onEnergy,onStart,onHistory,onSettings,onMusic,onMap,goal,onGoal,background,modalOpen,shoe,onShoe,pairs,onPairs}:StartProps){
+export function StartScreen({energy,onEnergy,onStart,onHistory,onSettings,onMusic,onMap,goal,onGoal,runnerName,modalOpen,shoe,onShoe,pairs,onPairs}:StartProps){
+  const sceneRef=useRef<HTMLDivElement>(null),intakeGeometry=useRef<IntakeGeometry|null>(null);
+  const [hour,setHour]=useState(()=>new Date().getHours());
+  useEffect(()=>{
+    const refresh=()=>setHour(new Date().getHours());
+    const timer=setInterval(refresh,60000);document.addEventListener('visibilitychange',refresh);
+    return()=>{clearInterval(timer);document.removeEventListener('visibilitychange',refresh);};
+  },[]);
+  const greeting=hour>=5&&hour<12?'Good morning':hour>=12&&hour<17?'Good afternoon':'Good evening';
   const [sheet,setSheet]=useState<'goal'|'shoes'|'trails'|null>(null);
   const [trailId,setTrailId]=useState<string|null>(null);
   const [intake,setIntake]=useState<Energy>(null),[intakeElapsed,setIntakeElapsed]=useState<number|null>(null);
@@ -215,7 +223,14 @@ export function StartScreen({energy,onEnergy,onStart,onHistory,onSettings,onMusi
     return()=>{document.removeEventListener('keydown',key);if(returnFocus.current?.isConnected)returnFocus.current.focus();};
   },[sheet]);
   const selectEnergy=(value:Exclude<Energy,null>)=>{
-    if(energy)return;onEnergy(value);
+    if(energy)return;
+    const root=sceneRef.current,ring=root?.querySelector('.rs-start-agent-ring');
+    if(root&&ring){
+      const bounds=root.getBoundingClientRect(),ratio=START_WIDTH/bounds.width,target=ring.getBoundingClientRect();
+      const tiles=Array.from(root.querySelectorAll('.rs-start-energy-choices>button')).map(tile=>{const b=tile.getBoundingClientRect();return {left:(b.left-bounds.left)*ratio,top:(b.top-bounds.top)*ratio,width:b.width*ratio,height:b.height*ratio};});
+      intakeGeometry.current={tiles,target:{x:(target.left+target.width/2-bounds.left)*ratio,y:(target.top+target.height/2-bounds.top)*ratio}};
+    }
+    onEnergy(value);
     if(entering){setEntering(false);return;}
     if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;
     setIntake(value);setIntakeElapsed(0);
@@ -226,34 +241,31 @@ export function StartScreen({energy,onEnergy,onStart,onHistory,onSettings,onMusi
   const clearEnergy=()=>{cancelAnimationFrame(intakeFrame.current);setIntake(null);setIntakeElapsed(null);onEnergy(null);};
   const openTrails=(id:string|null=null)=>{setTrailId(id);setSheet('trails');};
   const paused=hidden||sheet!==null||modalOpen;
-  return <StartCanvas><div className="rs-start-screen" style={{backgroundImage:'url("'+asset('start-map.jpg')+'")'}}>
-    <div className="rs-start-scene" inert={sheet!==null}>
-      {background==='trails'?<TrailBackground onTrail={openTrails} paused={paused}/>:<div className="rs-start-map-wash"/>}
-      <div className="rs-start-top-card">
-        <div className="rs-start-brand"><span>RUN</span><strong>STATE</strong><small>AGENT&nbsp; <b>•</b><em>&nbsp; READY</em></small></div>
-        <AgentRing selected={energy} onClear={clearEnergy} intakeElapsed={intakeElapsed}/>
-        <div className="rs-start-ready"><span>READY</span><strong>TO RUN</strong><small>GPS Ready</small></div>
-      </div>
-      <button className="rs-start-trails-pill" onClick={()=>openTrails()}>Trails <span aria-hidden="true">›</span></button>
-      <div className="rs-start-control-cluster">
-        <div className="rs-start-side-controls">
-          <button className="rs-start-side-control rs-start-shoes" onClick={()=>setSheet('shoes')} aria-label="Choose shoes" title={shoe?[shoe.brand,shoe.nickname||shoe.model].join(' '):undefined}><ShoeArt/></button>
-          <button className="rs-start-side-control rs-start-music" onClick={onMusic} aria-label="Spotify music"><img src={asset('start-music.jpg')} alt=""/></button>
-        </div>
-        <button className="rs-start-run" onClick={onStart} aria-label="Start"><StartDial ready={!!energy} entering={entering}/></button>
-      </div>
-      <div className="rs-start-lower">
+  return <StartCanvas><div ref={sceneRef} className="rs-start-screen">
+    <StartAtmosphere/>
+    <div className={'rs-start-scene'+(paused?' is-paused':'')} inert={sheet!==null}>
+      <div className="rs-start-body" onScroll={()=>{cancelAnimationFrame(intakeFrame.current);setIntake(null);setIntakeElapsed(null);}}>
+        <header className="rs-start-header"><img src={asset('start-runstate-wordmark.png')} alt="RunState"/><span>GPS Ready</span></header>
+        <button className="rs-start-trails-card" onClick={()=>openTrails()} aria-label="Explore trails">
+          <img src={asset('trails/trail_terry_hershey_photo.jpg')} alt=""/>
+          <span><strong>Explore trails</strong><small>Find your next route</small></span><b aria-hidden="true">›</b>
+        </button>
+        <div className="rs-start-visualizer-space"><div className="rs-start-visualizer">
+          <div className="rs-start-headphones"><img src={asset('start-music.jpg')} alt=""/></div>
+          <AgentRing selected={energy} onClear={clearEnergy} intakeElapsed={intakeElapsed}/>
+          <button className="rs-start-music" onClick={onMusic} aria-label="Spotify music"><img src={asset('spotify-icon-white.svg')} alt=""/></button>
+        </div></div>
+        <h1 className="rs-start-greeting">{greeting}{runnerName?', '+runnerName:''}</h1>
+        <p className="rs-start-energy-question" style={{opacity:energy?0:1}} aria-hidden={!!energy}>How’s your energy today?</p>
         <div className={'rs-start-energy-choices'+(entering?' is-entering':'')} style={{opacity:energy?0:1}} aria-hidden={!!energy}
           onAnimationEnd={event=>{if(event.animationName==='rs-start-entry-travel'&&event.target===event.currentTarget.lastElementChild)setEntering(false);}}>
           {(['Low','Moderate','High'] as const).map(value=><button key={value} className={'rs-start-energy-choice energy-'+value.toLowerCase()} onClick={()=>selectEnergy(value)} disabled={!!energy} aria-label={value+' pre-run energy'}><EnergyContents value={value}/></button>)}
         </div>
+        <div className="rs-start-footer"><button className="rs-start-run" onClick={onStart} aria-label="Start run"><StartDial ready={!!energy} entering={entering}/></button><span>Start Run</span></div>
       </div>
-      <div className={'rs-energy-prompt-space'+(paused||entering?' is-paused':'')} style={{opacity:energy?0:1}} aria-hidden={!!energy}>
-        <div className="rs-energy-prompt" role="note" aria-label="Choose energy, optional"><span className="rs-energy-word rs-energy-word-choose" aria-hidden="true">Choose</span><span className="rs-energy-word rs-energy-word-energy" aria-hidden="true">Energy</span><span className="rs-energy-static" aria-hidden="true">Choose energy</span></div>
-      </div>
-      {intake&&intakeElapsed!==null&&<EnergyIntake energy={intake} elapsed={intakeElapsed}/>}
+      {intake&&intakeElapsed!==null&&intakeGeometry.current&&<EnergyIntake energy={intake} elapsed={intakeElapsed} geometry={intakeGeometry.current}/>}
       <nav className="rs-start-navigation" aria-label="Run options">
-        <button onClick={onMap} aria-label="Open live map"><UtilityIcon kind="map"/><span>Map</span></button>
+        <button className="rs-start-shoes" onClick={()=>setSheet('shoes')} aria-label="Choose shoes" title={shoe?[shoe.brand,shoe.nickname||shoe.model].join(' '):undefined}><NavigationSymbol kind="shoes"/><span>Shoes</span></button>
         <button onClick={()=>setSheet('goal')} aria-label="Set a goal" title={goalLabel(goal)}><NavigationSymbol kind="goal"/><span>Goal</span></button>
         <button aria-current="page" aria-label="Run"><NavigationSymbol kind="run"/><span>Run</span></button>
         <button onClick={onSettings} aria-label="Run settings"><UtilityIcon kind="settings"/><span>Settings</span></button>
@@ -264,7 +276,17 @@ export function StartScreen({energy,onEnergy,onStart,onHistory,onSettings,onMusi
       <span className="rs-start-sheet-handle" aria-hidden="true"/>
       {sheet==='goal'?<GoalPanel value={goal} onSave={value=>{onGoal(value);setSheet(null);}} onClose={()=>setSheet(null)}/>
         :sheet==='shoes'?<ShoePicker value={shoe} pairs={pairs} onPairsChange={onPairs} onSelect={pair=>{onShoe(pair);setSheet(null);}} onClose={()=>setSheet(null)}/>
-        :<TrailBrowser initialTrail={trailId} onClose={()=>setSheet(null)}/>}
+        :<TrailBrowser initialTrail={trailId} onClose={()=>setSheet(null)} onMap={()=>{setSheet(null);onMap();}}/>}
     </div></div>}
   </div></StartCanvas>;
+}
+
+function StartAtmosphere(){
+  const u=START_WIDTH/393;
+  return <svg className="rs-start-atmosphere" viewBox={'0 0 '+START_WIDTH+' '+START_HEIGHT} aria-hidden="true">
+    {[{x:START_WIDTH+25*u,y:20*u,angle:115},{x:-45*u,y:START_HEIGHT-20*u,angle:-36}].map((branch,index)=><g key={index} transform={'translate('+branch.x+' '+branch.y+') rotate('+branch.angle+') scale('+u+')'}>
+      <path d="M0 0C38 19 115 32 182 90" fill="none" stroke="#387b68" strokeOpacity=".045" strokeWidth="3.5" strokeLinecap="round"/>
+      {Array.from({length:7},(_,i)=>{const length=i%2===0?54:45,width=length*.38;return <path key={i} transform={'translate('+(24+i*20)+' '+(10+i*8)+') rotate('+(i%2===0?-45:40)+')'} d={'M0 0C'+length*.28+' '+(-width)+' '+length*.82+' '+(-width*.55)+' '+length+' 0C'+length*.7+' '+width*.8+' '+length*.25+' '+width*.7+' 0 0Z'} fill="#387b68" fillOpacity=".055"/>;})}
+    </g>)}
+  </svg>;
 }

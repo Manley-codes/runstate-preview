@@ -42,16 +42,20 @@ function initialPlayerLayout():PlayerLayout {
   try { return localStorage.getItem('runstate-public-player') === 'album' ? 'album' : 'headphones'; }
   catch { return 'headphones'; }
 }
-function initialBackground():'hermann'|'trails' {
-  try{return localStorage.getItem('runstate-public-background')==='trails'?'trails':'hermann';}catch{return 'hermann';}
+function initialRunnerName():string {
+  try{return localStorage.getItem('runstate-public-name')??'Alex';}catch{return 'Alex';}
 }
 export default function App(){
-  const [background,setBackground]=useState(initialBackground);
+  const [runnerName,setRunnerName]=useState(initialRunnerName);
+  const [nameDraft,setNameDraft]=useState(runnerName);
+  const [nameNotice,setNameNotice]=useState('');
   const [goal,setGoal]=useState<PreviewGoal|null>(null);
   const [shoe,setShoe]=useState<DemoShoe|null>(null);
   const [pairs,setPairs]=useState<DemoShoe[]>([]);
-  function chooseBackground(value:'hermann'|'trails'){
-    setBackground(value);try{localStorage.setItem('runstate-public-background',value);}catch{/* Optional appearance only. */}
+  function saveName(){
+    const name=nameDraft.replace(/\s+/g,' ').trim().slice(0,40);
+    try{localStorage.setItem('runstate-public-name',name);setRunnerName(name);setNameDraft(name);setNameNotice('Saved in this browser only.');}
+    catch{setNameNotice('This browser could not save the name. Please try again.');}
   }
   function changePairs(next:DemoShoe[]){setPairs(next);if(shoe&&!next.some(pair=>pair.id===shoe.id&&!pair.archived))setShoe(null);}
 
@@ -102,6 +106,7 @@ export default function App(){
   }
   useEffect(()=>{
     if(!sheet)return;
+    if(sheet==='settings'){setNameDraft(runnerName);setNameNotice('');}
     const root=phone.current;
     const previous=document.activeElement as HTMLElement|null;
     const dialog=root?.querySelector<HTMLElement>('[role="dialog"]');
@@ -109,7 +114,7 @@ export default function App(){
     const key=(event:KeyboardEvent)=>{
       if(event.key==='Escape'){setSheet(null);return;}
       if(event.key!=='Tab'||!dialog)return;
-      const targets=Array.from(dialog.querySelectorAll<HTMLElement>('button:not(:disabled),a[href]'));
+      const targets=Array.from(dialog.querySelectorAll<HTMLElement>('button:not(:disabled),input:not(:disabled),a[href]'));
       const first=targets[0],last=targets.at(-1);
       if(event.shiftKey&&document.activeElement===first){event.preventDefault();last?.focus();}
       if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first?.focus();}
@@ -135,7 +140,7 @@ export default function App(){
         <div ref={phone} className="phone-screen" data-screen={page}>
           <div className="screen-content" inert={sheet!==null}>
             {page==='opening'&&<Opening key={revision} onContinue={()=>navigate('start')}/>}
-            {page==='start'&&<StartScreen key={revision} energy={energy} onEnergy={setEnergy} onStart={begin} onHistory={()=>navigate('history')} onSettings={()=>setSheet('settings')} onMusic={()=>setSheet('music')} onMap={()=>setSheet('map')} goal={goal} onGoal={setGoal} background={background} modalOpen={sheet!==null} shoe={shoe} onShoe={setShoe} pairs={pairs} onPairs={changePairs}/>}
+            {page==='start'&&<StartScreen key={revision} energy={energy} onEnergy={setEnergy} onStart={begin} onHistory={()=>navigate('history')} onSettings={()=>setSheet('settings')} onMusic={()=>setSheet('music')} onMap={()=>setSheet('map')} goal={goal} onGoal={setGoal} runnerName={runnerName} modalOpen={sheet!==null} shoe={shoe} onShoe={setShoe} pairs={pairs} onPairs={changePairs}/>}
             {(page==='countdown'||page==='active'||page==='music')&&<ActiveRun key={revision} appearance={appearance} playerLayout={playerLayout} initialMode={page} run={run} onFinish={finish} onCancel={()=>navigate('start')} onMap={()=>setSheet('map')} onStarted={()=>{setPage('active');history.replaceState(null,'','#active');}} onPausedChange={setPaused}/>}
             {page==='complete'&&<CompleteScreen key={revision} run={run} onChange={updateRun} onHistory={()=>{updateRun(run);navigate('history');}} onNewRun={()=>navigate('start')}/>}
             {page==='history'&&<HistoryScreen key={revision} runs={historyRuns} onDelete={deleteRun} onBack={()=>navigate('start')}/>}
@@ -159,10 +164,13 @@ export default function App(){
                 </div>
                 {playerLayout==='album'&&<p>Sample album artwork changes as you explore the silent music controls.</p>}
               </fieldset>
-              <fieldset className="display-options"><legend>Start background</legend><div className="theme-choices">
-                <button onClick={()=>chooseBackground('hermann')} aria-pressed={background==='hermann'}>Hermann Park</button>
-                <button onClick={()=>chooseBackground('trails')} aria-pressed={background==='trails'}>Houston trails</button>
-              </div></fieldset>
+              <fieldset className="display-options preview-name"><legend>Your name</legend>
+                <label htmlFor="preview-runner-name">Your name (optional)</label>
+                <input id="preview-runner-name" value={nameDraft} onChange={e=>{setNameDraft(e.target.value);setNameNotice('');}} maxLength={40} autoComplete="off" placeholder="Leave blank for a general greeting"/>
+                <p>Alex is a fictional example. Any name you enter stays in this browser.</p>
+                <button className="sheet-primary" onClick={saveName}>Save name</button>
+                {nameNotice&&<p role="status">{nameNotice}</p>}
+              </fieldset>
               <button className="sheet-primary" onClick={()=>setSheet(null)}>Done</button></>
             :sheet==='music'?<><img className="sheet-music-art" src={asset('start-music.jpg')} alt="RunState headphones artwork"/><p>During a run, tap Spotify Music to switch from distance to the player. Try the silent example controls here.</p><button className="sheet-primary" onClick={()=>navigate('music')}>Explore the player <ArrowRightIcon/></button></>
             :<><div className="map-demo-graphic" aria-hidden="true"><svg viewBox="0 0 300 200"><path d="M0 72H300M0 140H300M75 0V200M210 0V200" stroke="#cfdbcb" strokeWidth="12"/><path d="M60 159Q70 32 150 61T247 155" stroke="#71896b" strokeWidth="5" fill="none" strokeLinecap="round"/><circle cx="60" cy="159" r="8" fill="#7353ef"/><circle cx="247" cy="155" r="8" fill="#315b45"/></svg></div><p>The Android app can show your recorded route. This illustration is fictional; the preview does not request your location.</p><button className="sheet-primary" onClick={()=>setSheet(null)}>Back to the screen</button></>}

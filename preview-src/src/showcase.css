@@ -24,3 +24,5 @@
 .display-options .theme-choices button[aria-pressed=true]{color:#f7fbf7;background:#2c4236;border-color:#2c4236;box-shadow:none}
 .display-options p{margin:6px 0 0}
 @media(min-width:761px) and (max-height:760px){.showcase{padding:18px 28px;gap:45px}.showcase-guide{padding:0}.showcase-guide h1{font-size:34px;margin:20px 0 12px}.showcase-lede{margin-bottom:14px}.screen-nav button{padding:6px 10px;min-height:34px}.interaction-hint{margin-top:12px}.showcase-tools{margin:10px 12px}.demo-disclosure{margin:12px}.showcase-guide footer{margin-top:10px}.phone-frame{width:calc((100dvh - 55px)*.49496)}}@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}}
+
+.preview-name label{display:block;font-size:13px;color:#34463c;margin-top:12px}.preview-name input{display:block;width:100%;padding:12px;border:1px solid #b6c5bc;border-radius:10px;background:white;color:#26392f;margin-top:8px}.preview-name p[role=status]{font-weight:600}
