@@ -8,3 +8,5 @@
 @keyframes cp-merge{0%{transform:translate(0,0) scale(1);opacity:1}31.9%{transform:translate(0,0) scale(1);opacity:1;animation-timing-function:cubic-bezier(.4,0,.2,1)}87.23%{opacity:0}100%{transform:translate(calc(var(--flight-x)*.62),calc(var(--flight-y)*.62)) scale(.9);opacity:0}}
 @keyframes cp-label-fade{0%,70.15%{opacity:1}100%{opacity:0}}
 @media(prefers-reduced-motion:reduce){.cp-flight{display:none}}
+
+.cp-goal-result{margin:8px 18px;color:#4b5849;font-size:13px;line-height:20px;text-align:center}

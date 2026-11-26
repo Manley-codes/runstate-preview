@@ -1,7 +1,9 @@
+import { goalLabel, type PreviewGoal } from './GoalPanel';
 export type Energy = 'Low' | 'Moderate' | 'High' | null;
 export type Appearance = 'night' | 'day';
 export type DemoRun = {
   id: string;
+  goal?: PreviewGoal|null;
   distance: number;
   activeSeconds: number;
   averagePace: string;
@@ -33,3 +35,10 @@ export const exampleHistory: DemoRun[] = [
   {...exampleRun('High'),id:'example-2',distance:4.0,activeSeconds:2520,averagePace:'10:30',postEnergy:'Moderate',effort:5,completedAt:'2026-10-24T18:30:00',reflection:'Four miles and forty-two active minutes. You made room for the run, then brought it home.'},
   {...exampleRun('Low'),id:'example-3',distance:2.2,activeSeconds:1287,averagePace:'9:45',postEnergy:'Moderate',effort:4,completedAt:'2026-10-22T07:15:00',reflection:'You started low and finished moderate. Twenty-one active minutes made their own mark on the morning.'},
 ];
+
+/** Example-run outcome uses recorded sample metrics; no AI or paid service call. */
+export function goalOutcome(run:DemoRun):string|null {
+  if(!run.goal)return null;
+  const achieved=run.goal.kind==='time'?run.activeSeconds*1000>=run.goal.activeMillis:run.distance*1609.344>=run.goal.meters;
+  return `Goal · ${goalLabel(run.goal)} · ${achieved?'Reached':'Not reached'}`;
+}

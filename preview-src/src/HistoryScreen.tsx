@@ -1,3 +1,4 @@
+import { goalOutcome } from './demo';
 import {useEffect, useLayoutEffect, useRef, useState, type CSSProperties} from 'react';
 import {asset, formatTime, type DemoRun, type Energy} from './demo';
 import './history-screen.css';
@@ -156,7 +157,7 @@ export function HistoryScreen({runs,onBack,onDelete}:{runs:DemoRun[];onBack:()=>
             </div>
             <p className="nh-reflection">{item.reflection||'No reflection saved for this run.'}</p>
             {item.reflection&&item.reflectionSong&&<p className="nh-reflection-song">Reflection song · {item.reflectionSong.title} — {item.reflectionSong.artist}</p>}
-            <p className="nh-active-time">Active time · {formatTime(item.activeSeconds)}</p>
+            {item.goal&&<p className="nh-active-time">{goalOutcome(item)}</p>}<p className="nh-active-time">Active time · {formatTime(item.activeSeconds)}</p>
             {item.preEnergy&&<p className="nh-before-energy">Before run · {item.preEnergy}</p>}
             {item.note&&<section className="nh-note"><h3>YOUR NOTE</h3><p>{item.note}</p></section>}
             <p className="nh-after-energy">After run · {energyLabel(item)}</p>

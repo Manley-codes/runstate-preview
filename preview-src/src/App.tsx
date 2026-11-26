@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { Cross2Icon, GearIcon, ArrowRightIcon, ResetIcon } from '@radix-ui/react-icons';
 import ActiveRun from './ActiveRun';
+import type { PreviewGoal } from './GoalPanel';
+import type { DemoShoe } from './ShoePicker';
 import { Opening, StartScreen } from './OpeningStart';
 import { CompleteScreen, HistoryScreen } from './CompleteHistory';
 import { asset, exampleHistory, exampleRun, type Appearance, type DemoRun, type Energy } from './demo';
@@ -40,7 +42,19 @@ function initialPlayerLayout():PlayerLayout {
   try { return localStorage.getItem('runstate-public-player') === 'album' ? 'album' : 'headphones'; }
   catch { return 'headphones'; }
 }
+function initialBackground():'hermann'|'trails' {
+  try{return localStorage.getItem('runstate-public-background')==='trails'?'trails':'hermann';}catch{return 'hermann';}
+}
 export default function App(){
+  const [background,setBackground]=useState(initialBackground);
+  const [goal,setGoal]=useState<PreviewGoal|null>(null);
+  const [shoe,setShoe]=useState<DemoShoe|null>(null);
+  const [pairs,setPairs]=useState<DemoShoe[]>([]);
+  function chooseBackground(value:'hermann'|'trails'){
+    setBackground(value);try{localStorage.setItem('runstate-public-background',value);}catch{/* Optional appearance only. */}
+  }
+  function changePairs(next:DemoShoe[]){setPairs(next);if(shoe&&!next.some(pair=>pair.id===shoe.id&&!pair.archived))setShoe(null);}
+
   const [page,setPage]=useState<Page>(initialPage);
   const [appearanceChoice,setAppearanceChoice]=useState<AppearanceChoice>(initialAppearance);
   const [appearance,setAppearance]=useState<Appearance>(()=>runAppearance(appearanceChoice));
@@ -55,17 +69,17 @@ export default function App(){
   const activePage=pages.find(p=>p.id===page)!;
   function navigate(next:Page){
     if(next==='countdown'||next==='active'||next==='music'){
-      setRun(exampleRun(energy));
+      setRun({...exampleRun(energy),goal});
       setAppearance(runAppearance(appearanceChoice));
     }
     setPaused(false);setPage(next);setSheet(null);setRevision(v=>v+1);
     history.replaceState(null,'',`#${next}`);
   }
   useEffect(()=>{
-    const onHash=()=>{const next=initialPage();if(next==='countdown'||next==='active'||next==='music'){setRun(exampleRun(energy));setAppearance(runAppearance(appearanceChoice));}setPaused(false);setPage(next);setSheet(null);setRevision(v=>v+1);};
+    const onHash=()=>{const next=initialPage();if(next==='countdown'||next==='active'||next==='music'){setRun({...exampleRun(energy),goal});setAppearance(runAppearance(appearanceChoice));}setPaused(false);setPage(next);setSheet(null);setRevision(v=>v+1);};
     window.addEventListener('hashchange',onHash);return()=>window.removeEventListener('hashchange',onHash);
-  },[energy,appearanceChoice]);
-  function begin(){setRun(exampleRun(energy));navigate('countdown');}
+  },[energy,appearanceChoice,goal]);
+  function begin(){setRun({...exampleRun(energy),goal});navigate('countdown');}
   function finish(next:DemoRun){
     const saved={...next,id:`example-finished-${Date.now()}`};
     setRun(saved);setHistoryRuns(old=>[saved,...old]);navigate('complete');
@@ -75,9 +89,9 @@ export default function App(){
   }
   function deleteRun(id:string){
     setHistoryRuns(old=>old.filter(item=>item.id!==id));
-    if(run.id===id)setRun(exampleRun(energy));
+    if(run.id===id)setRun({...exampleRun(energy),goal});
   }
-  function reset(){setEnergy(null);setRun(exampleRun(null));setHistoryRuns(exampleHistory);navigate('opening');}
+  function reset(){setGoal(null);setShoe(null);setPairs([]);setEnergy(null);setRun(exampleRun(null));setHistoryRuns(exampleHistory);navigate('opening');}
   function chooseAppearance(next:AppearanceChoice){
     setAppearanceChoice(next);setAppearance(runAppearance(next));
     try{localStorage.setItem('runstate-public-appearance',next);}catch{/* Optional preference only. */}
@@ -121,7 +135,7 @@ export default function App(){
         <div ref={phone} className="phone-screen" data-screen={page}>
           <div className="screen-content" inert={sheet!==null}>
             {page==='opening'&&<Opening key={revision} onContinue={()=>navigate('start')}/>}
-            {page==='start'&&<StartScreen key={revision} energy={energy} onEnergy={setEnergy} onStart={begin} onHistory={()=>navigate('history')} onSettings={()=>setSheet('settings')} onMusic={()=>setSheet('music')} onMap={()=>setSheet('map')}/>}
+            {page==='start'&&<StartScreen key={revision} energy={energy} onEnergy={setEnergy} onStart={begin} onHistory={()=>navigate('history')} onSettings={()=>setSheet('settings')} onMusic={()=>setSheet('music')} onMap={()=>setSheet('map')} goal={goal} onGoal={setGoal} background={background} modalOpen={sheet!==null} shoe={shoe} onShoe={setShoe} pairs={pairs} onPairs={changePairs}/>}
             {(page==='countdown'||page==='active'||page==='music')&&<ActiveRun key={revision} appearance={appearance} playerLayout={playerLayout} initialMode={page} run={run} onFinish={finish} onCancel={()=>navigate('start')} onMap={()=>setSheet('map')} onStarted={()=>{setPage('active');history.replaceState(null,'','#active');}} onPausedChange={setPaused}/>}
             {page==='complete'&&<CompleteScreen key={revision} run={run} onChange={updateRun} onHistory={()=>{updateRun(run);navigate('history');}} onNewRun={()=>navigate('start')}/>}
             {page==='history'&&<HistoryScreen key={revision} runs={historyRuns} onDelete={deleteRun} onBack={()=>navigate('start')}/>}
@@ -145,6 +159,10 @@ export default function App(){
                 </div>
                 {playerLayout==='album'&&<p>Sample album artwork changes as you explore the silent music controls.</p>}
               </fieldset>
+              <fieldset className="display-options"><legend>Start background</legend><div className="theme-choices">
+                <button onClick={()=>chooseBackground('hermann')} aria-pressed={background==='hermann'}>Hermann Park</button>
+                <button onClick={()=>chooseBackground('trails')} aria-pressed={background==='trails'}>Houston trails</button>
+              </div></fieldset>
               <button className="sheet-primary" onClick={()=>setSheet(null)}>Done</button></>
             :sheet==='music'?<><img className="sheet-music-art" src={asset('start-music.jpg')} alt="RunState headphones artwork"/><p>During a run, tap Spotify Music to switch from distance to the player. Try the silent example controls here.</p><button className="sheet-primary" onClick={()=>navigate('music')}>Explore the player <ArrowRightIcon/></button></>
             :<><div className="map-demo-graphic" aria-hidden="true"><svg viewBox="0 0 300 200"><path d="M0 72H300M0 140H300M75 0V200M210 0V200" stroke="#cfdbcb" strokeWidth="12"/><path d="M60 159Q70 32 150 61T247 155" stroke="#71896b" strokeWidth="5" fill="none" strokeLinecap="round"/><circle cx="60" cy="159" r="8" fill="#7353ef"/><circle cx="247" cy="155" r="8" fill="#315b45"/></svg></div><p>The Android app can show your recorded route. This illustration is fictional; the preview does not request your location.</p><button className="sheet-primary" onClick={()=>setSheet(null)}>Back to the screen</button></>}

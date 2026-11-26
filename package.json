@@ -9,7 +9,9 @@
     "preview": "vite preview --host 127.0.0.1 --port 5194 --strictPort",
     "test": "node --test scripts/verify-pages.mjs",
     "test:opening": "node --test scripts/verify-opening.mjs",
-    "test:interactions": "node --test scripts/verify-interactions.mjs"
+    "test:interactions": "node --test scripts/verify-interactions.mjs",
+    "test:start": "node --test scripts/verify-start-design.mjs",
+    "test:trails": "node --test scripts/verify-trails.mjs"
   },
   "dependencies": {
     "@fontsource/roboto": "5.2.10",
