@@ -1,6 +1,6 @@
 # RunState interactive app preview
 
-[Explore the preview](https://manley-codes.github.io/runstate-preview/)  [Android app and backend](https://github.com/Manley-codes/RunState)
+[Explore the preview](https://manley-codes.github.io/runstate-preview/) | [Android app and backend](https://github.com/Manley-codes/RunState)
 
 RunState connects the numbers from a run with how you felt and the music around it. This repository presents its current Android screen design as an interactive browser walkthrough.
 
